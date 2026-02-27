@@ -41,7 +41,7 @@ export default function ChartCard({
     tooltip: {
       formatter: (datum: TrendItem) => ({
         name: title,
-        value: datum.value.toLocaleString(),
+        value: (datum?.value ?? 0).toLocaleString(),
       }),
     },
   };

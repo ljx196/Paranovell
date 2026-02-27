@@ -50,7 +50,7 @@ export default function MessagesScreen() {
 
   const loadConversations = async () => {
     try {
-      const response = await api.getConversations() as any;
+      const response = await api.getConversations();
       const apiConversations = response.data?.conversations || [];
       if (apiConversations.length > 0) {
         const formatted: Conversation[] = apiConversations.map((c: any) => ({
@@ -117,7 +117,7 @@ export default function MessagesScreen() {
       if (message) {
         handledParamId.current = params.id;
         openDetailModal(message);
-        try { router.setParams({ id: undefined }); } catch {}
+        try { router.setParams({ id: undefined }); } catch { /* navigation may not be ready */ }
       }
     }
   }, [params.id, messages]);

@@ -55,11 +55,19 @@ class AdminApiClient {
         if (error.response?.status === 401) {
           localStorage.removeItem(TOKEN_KEY);
           window.location.href = '/admin/login';
+          return Promise.reject(new Error('登录已过期，请重新登录'));
         }
         if (error.response?.status === 403) {
           return Promise.reject(new Error('无管理权限'));
         }
-        return Promise.reject(error);
+        if (!error.response) {
+          return Promise.reject(new Error('网络连接失败，请检查网络'));
+        }
+        if (error.code === 'ECONNABORTED') {
+          return Promise.reject(new Error('请求超时，请稍后重试'));
+        }
+        const msg = error.response?.data?.message || `服务器错误 (${error.response?.status})`;
+        return Promise.reject(new Error(msg));
       },
     );
   }

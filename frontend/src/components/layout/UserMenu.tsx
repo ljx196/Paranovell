@@ -48,7 +48,13 @@ export function UserMenu({
   useEffect(() => {
     if (Platform.OS !== 'web' || !isOpen) return;
 
+    // Track opening frame to skip the click that opened the menu
+    let skipFirst = true;
     const handleClickOutside = (e: MouseEvent) => {
+      if (skipFirst) {
+        skipFirst = false;
+        return;
+      }
       const container = document.getElementById(USER_MENU_ID);
       if (container && !container.contains(e.target as Node)) {
         setIsOpen(false);
@@ -56,13 +62,8 @@ export function UserMenu({
       }
     };
 
-    // Use setTimeout to avoid catching the opening click itself
-    const timer = setTimeout(() => {
-      document.addEventListener('mousedown', handleClickOutside);
-    }, 0);
-
+    document.addEventListener('mousedown', handleClickOutside);
     return () => {
-      clearTimeout(timer);
       document.removeEventListener('mousedown', handleClickOutside);
     };
   }, [isOpen]);

@@ -63,8 +63,8 @@ export default function RecentLogs({ logs, onViewAll }: RecentLogsProps) {
               }}
             />
             <span style={{ flex: 1, fontSize: 13, color: '#555' }}>
-              {log.admin_name || '系统'} {ACTION_LABELS[log.action] || log.action}
-              {log.target_name ? ` - ${log.target_name}` : ''}
+              {log.admin_email || '系统'} {log.action_label || ACTION_LABELS[log.action] || log.action}
+              {log.target ? ` - ${log.target}` : ''}
             </span>
             <span style={{ fontSize: 12, color: '#bbb', whiteSpace: 'nowrap' }}>
               {formatDateTime(log.created_at)}

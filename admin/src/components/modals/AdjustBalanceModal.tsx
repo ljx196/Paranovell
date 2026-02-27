@@ -61,7 +61,7 @@ export default function AdjustBalanceModal({
       <div style={{ marginBottom: 16, padding: 12, background: '#f6f8fa', borderRadius: 8 }}>
         <span style={{ color: '#999', fontSize: 13 }}>当前余额：</span>
         <span style={{ fontSize: 18, fontWeight: 600, color: '#1677ff' }}>
-          {currentBalance.toLocaleString()} 点
+          {(currentBalance ?? 0).toLocaleString()} 点
         </span>
       </div>
 

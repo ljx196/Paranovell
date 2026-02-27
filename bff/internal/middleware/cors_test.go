@@ -87,6 +87,23 @@ func TestCORS_SpecificHeaders(t *testing.T) {
 	}
 }
 
+// --- With Origin header, should reflect it back ---
+
+func TestCORS_ReflectsOrigin(t *testing.T) {
+	r := corsRouter()
+
+	w := httptest.NewRecorder()
+	req, _ := http.NewRequest("GET", "/test", nil)
+	req.Header.Set("Origin", "http://localhost:3000")
+	r.ServeHTTP(w, req)
+
+	got := w.Header().Get("Access-Control-Allow-Origin")
+	want := "http://localhost:3000"
+	if got != want {
+		t.Errorf("Access-Control-Allow-Origin = %q, want %q", got, want)
+	}
+}
+
 // --- OPTIONS does not reach the handler ---
 
 func TestCORS_OptionsDoesNotReachHandler(t *testing.T) {

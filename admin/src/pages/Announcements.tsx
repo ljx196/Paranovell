@@ -76,15 +76,15 @@ export default function Announcements() {
     },
     {
       title: '触达人数',
-      dataIndex: 'recipient_count',
+      dataIndex: 'target_count',
       width: 100,
-      render: (v: number) => v?.toLocaleString() ?? '-',
+      render: (v: number) => (v ?? 0).toLocaleString(),
     },
     {
-      title: '已读率',
-      dataIndex: 'read_rate',
+      title: '已读数',
+      dataIndex: 'read_count',
       width: 80,
-      render: (v: number) => (v !== undefined ? `${(v * 100).toFixed(1)}%` : '-'),
+      render: (v: number) => (v ?? 0).toLocaleString(),
     },
     {
       title: '发送时间',

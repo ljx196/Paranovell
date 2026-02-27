@@ -3,6 +3,7 @@ package service
 import (
 	"errors"
 	"os"
+	"strings"
 
 	"github.com/gennovelweb/bff/internal/database"
 	"github.com/gennovelweb/bff/internal/dto"
@@ -61,76 +62,74 @@ func (s *AuthService) Register(req *dto.RegisterRequest) (*model.User, error) {
 		return nil, err
 	}
 
-	// 生成邀请码
-	inviteCode := utils.GenerateInviteCode()
-	// 确保邀请码唯一
-	for {
-		var count int64
-		db.Model(&model.User{}).Where("invite_code = ?", inviteCode).Count(&count)
-		if count == 0 {
-			break
-		}
-		inviteCode = utils.GenerateInviteCode()
-	}
-
-	// 创建用户
+	// 创建用户（邀请码冲突时自动重试）
 	user := &model.User{
 		Email:         req.Email,
 		PasswordHash:  passwordHash,
 		Nickname:      req.Nickname,
-		InviteCode:    inviteCode,
+		InviteCode:    utils.GenerateInviteCode(),
 		EmailVerified: false,
 		Status:        1,
 	}
 
-	// 事务：创建用户和推荐关系
-	err = db.Transaction(func(tx *gorm.DB) error {
-		if err := tx.Create(user).Error; err != nil {
-			return err
+	const maxRetries = 3
+	for attempt := 0; attempt < maxRetries; attempt++ {
+		if attempt > 0 {
+			user.ID = 0 // reset for retry
+			user.InviteCode = utils.GenerateInviteCode()
 		}
-
-		// 创建用户偏好设置
-		pref := &model.UserPreference{
-			UserID:              user.ID,
-			Theme:               "system",
-			Language:            "zh-CN",
-			NotificationEnabled: true,
-			SettingsJSON:        "{}",
-		}
-		if err := tx.Create(pref).Error; err != nil {
-			return err
-		}
-
-		// 如果有推荐人，创建推荐关系
-		if referrerID > 0 {
-			referral := &model.Referral{
-				ReferrerID: referrerID,
-				RefereeID:  user.ID,
-			}
-			if err := tx.Create(referral).Error; err != nil {
+		err = db.Transaction(func(tx *gorm.DB) error {
+			if err := tx.Create(user).Error; err != nil {
 				return err
 			}
-		}
 
-		// 创建余额记录并赠送初始点数
-		if balanceSvc != nil {
-			if err := balanceSvc.InitBalanceForNewUser(tx, user.ID); err != nil {
+			// 创建用户偏好设置
+			pref := &model.UserPreference{
+				UserID:              user.ID,
+				Theme:               "system",
+				Language:            "zh-CN",
+				NotificationEnabled: true,
+				SettingsJSON:        "{}",
+			}
+			if err := tx.Create(pref).Error; err != nil {
 				return err
 			}
-		}
 
-		// 发送欢迎系统消息
-		welcomeMsg := &model.SystemMessage{
-			UserID:  user.ID,
-			Title:   "欢迎加入 GenNovelWeb",
-			Content: "感谢您注册 GenNovelWeb！请验证您的邮箱以获得完整功能。",
-			MsgType: "account",
-			IsRead:  false,
-		}
-		return tx.Create(welcomeMsg).Error
-	})
+			// 如果有推荐人，创建推荐关系
+			if referrerID > 0 {
+				referral := &model.Referral{
+					ReferrerID: referrerID,
+					RefereeID:  user.ID,
+				}
+				if err := tx.Create(referral).Error; err != nil {
+					return err
+				}
+			}
 
-	if err != nil {
+			// 创建余额记录并赠送初始点数
+			if balanceSvc != nil {
+				if err := balanceSvc.InitBalanceForNewUser(tx, user.ID); err != nil {
+					return err
+				}
+			}
+
+			// 发送欢迎系统消息
+			welcomeMsg := &model.SystemMessage{
+				UserID:  user.ID,
+				Title:   "欢迎加入 GenNovelWeb",
+				Content: "感谢您注册 GenNovelWeb！请验证您的邮箱以获得完整功能。",
+				MsgType: "account",
+				IsRead:  false,
+			}
+			return tx.Create(welcomeMsg).Error
+		})
+		if err == nil {
+			break
+		}
+		// Only retry on invite code unique constraint violation
+		if attempt < maxRetries-1 && strings.Contains(err.Error(), "invite_code") {
+			continue
+		}
 		return nil, err
 	}
 

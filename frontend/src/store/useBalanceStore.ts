@@ -69,6 +69,7 @@ interface BalanceState {
   fetchRechargeConfig: () => Promise<void>;
   createRechargeOrder: (amountYuan: number, method: string) => Promise<RechargeOrder>;
   pollOrderStatus: (orderNo: string) => Promise<OrderStatus>;
+  cancelPolling: () => void;
   fetchPricing: () => Promise<void>;
   setActiveTab: (tab: UsageTab) => void;
   setShowLowBalanceModal: (show: boolean, amount?: number) => void;
@@ -105,6 +106,8 @@ const initialState = {
   isLoadingMoreRanking: false,
   isRecharging: false,
 };
+
+let pollAbortController: AbortController | null = null;
 
 export const useBalanceStore = create<BalanceState>((set, get) => ({
   ...initialState,
@@ -283,20 +286,42 @@ export const useBalanceStore = create<BalanceState>((set, get) => ({
   },
 
   pollOrderStatus: async (orderNo) => {
+    // Cancel any existing poll
+    pollAbortController?.abort();
+    const controller = new AbortController();
+    pollAbortController = controller;
+
     const MAX_ATTEMPTS = 30;
     const INTERVAL = 2000;
 
-    for (let i = 0; i < MAX_ATTEMPTS; i++) {
-      const status = await api.getOrderStatus(orderNo);
-      if (status.status !== 0) {
-        if (status.status === 1) {
-          get().fetchBalance();
+    try {
+      for (let i = 0; i < MAX_ATTEMPTS; i++) {
+        if (controller.signal.aborted) break;
+        const status = await api.getOrderStatus(orderNo);
+        if (status.status !== 0) {
+          if (status.status === 1) {
+            get().fetchBalance();
+          }
+          return status;
         }
-        return status;
+        await new Promise((resolve, reject) => {
+          const timer = setTimeout(resolve, INTERVAL);
+          controller.signal.addEventListener('abort', () => { clearTimeout(timer); reject(new Error('cancelled')); }, { once: true });
+        });
       }
-      await new Promise((resolve) => setTimeout(resolve, INTERVAL));
+    } catch {
+      // Polling was cancelled
+    } finally {
+      if (pollAbortController === controller) {
+        pollAbortController = null;
+      }
     }
     return { order_no: orderNo, status: 0, status_text: '支付超时', points: 0 } as OrderStatus;
+  },
+
+  cancelPolling: () => {
+    pollAbortController?.abort();
+    pollAbortController = null;
   },
 
   fetchPricing: async () => {

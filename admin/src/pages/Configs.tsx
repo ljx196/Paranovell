@@ -29,12 +29,15 @@ export default function Configs() {
   const initialValues = useMemo(() => {
     const values: Record<string, unknown> = {};
     for (const cfg of configs) {
-      if (cfg.value_type === 'bool') {
-        values[cfg.key] = cfg.value === 'true';
-      } else if (cfg.value_type === 'number' || cfg.value_type === 'int') {
-        values[cfg.key] = Number(cfg.value);
+      const val = cfg.config_value;
+      if (typeof val === 'boolean') {
+        values[cfg.config_key] = val;
+      } else if (typeof val === 'number') {
+        values[cfg.config_key] = val;
+      } else if (typeof val === 'string') {
+        values[cfg.config_key] = val;
       } else {
-        values[cfg.key] = cfg.value;
+        values[cfg.config_key] = val != null ? String(val) : '';
       }
     }
     // Parse presets
@@ -60,19 +63,21 @@ export default function Configs() {
       const updates: Array<{ key: string; value: string }> = [];
 
       for (const cfg of configs) {
-        const formValue = values[cfg.key as keyof ConfigFormValues];
-        let newValue: string;
+        const formValue = values[cfg.config_key as keyof ConfigFormValues];
+        let newValue: unknown;
 
-        if (cfg.key === 'recharge.presets') {
-          newValue = JSON.stringify(presets);
+        if (cfg.config_key === 'recharge.presets') {
+          newValue = presets;
         } else if (typeof formValue === 'boolean') {
-          newValue = String(formValue);
+          newValue = formValue;
         } else {
-          newValue = String(formValue ?? cfg.value);
+          newValue = formValue ?? cfg.config_value;
         }
 
-        if (newValue !== cfg.value) {
-          updates.push({ key: cfg.key, value: newValue });
+        const oldStr = JSON.stringify(cfg.config_value);
+        const newStr = JSON.stringify(newValue);
+        if (newStr !== oldStr) {
+          updates.push({ key: cfg.config_key, value: String(newValue) });
         }
       }
 

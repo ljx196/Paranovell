@@ -27,10 +27,18 @@ export default function ProfileContent() {
 
   const loadProfile = async () => {
     try {
-      const response = await api.getProfile() as any;
-      if (response.data) {
-        setUser(response.data);
-        setNickname(response.data.nickname || '');
+      const response = await api.getProfile();
+      const d = response.data;
+      if (d) {
+        setUser({
+          id: d.id,
+          email: d.email,
+          nickname: d.nickname,
+          avatarUrl: d.avatar_url,
+          emailVerified: d.email_verified,
+          inviteCode: d.invite_code,
+        });
+        setNickname(d.nickname || '');
       }
     } catch (err) {
       console.log('Failed to load profile:', err);

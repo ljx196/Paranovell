@@ -133,8 +133,14 @@ func AdminResetPassword(c *gin.Context) {
 		return
 	}
 
-	utils.Success(c, gin.H{
-		"message":      "密码已重置",
-		"new_password": newPassword,
-	})
+	if req.SendEmail {
+		utils.Success(c, gin.H{
+			"message": "密码已重置，新密码已发送至用户邮箱",
+		})
+	} else {
+		utils.Success(c, gin.H{
+			"message":      "密码已重置",
+			"new_password": newPassword,
+		})
+	}
 }

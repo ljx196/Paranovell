@@ -49,10 +49,8 @@ export const useAuthStore = create<AuthState>()(
       setLoading: (isLoading) => set({ isLoading }),
 
       initialize: () => {
-        // After hydration, set loading to false
-        setTimeout(() => {
-          set({ isLoading: false });
-        }, 100);
+        // Called manually as fallback; onRehydrateStorage handles normal case
+        set({ isLoading: false });
       },
     }),
     {
@@ -64,12 +62,9 @@ export const useAuthStore = create<AuthState>()(
         refreshToken: state.refreshToken,
         isAuthenticated: state.isAuthenticated,
       }),
-      onRehydrateStorage: () => (state, error) => {
-        // 无论是否有存储数据，都设置 isLoading 为 false
-        // 使用 setState 确保状态更新
-        setTimeout(() => {
-          useAuthStore.setState({ isLoading: false });
-        }, 0);
+      onRehydrateStorage: () => () => {
+        // Hydration complete — always set loading to false
+        useAuthStore.setState({ isLoading: false });
       },
     }
   )

@@ -126,7 +126,7 @@ export default function ChatScreen() {
   const loadConversations = async () => {
     setIsLoadingConversations(true);
     try {
-      const response = await api.getConversations() as any;
+      const response = await api.getConversations();
       const apiConversations = response.data?.conversations || [];
 
       if (apiConversations.length > 0) {

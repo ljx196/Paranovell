@@ -92,7 +92,10 @@ func (s *AdminUserService) GetDetail(userID uint) (*dto.AdminUserDetailResponse,
 	}
 
 	var balance model.UserBalance
-	db.Where("user_id = ?", userID).First(&balance)
+	if err := db.Where("user_id = ?", userID).First(&balance).Error; err != nil {
+		// Balance record may not exist yet; use zero values
+		balance = model.UserBalance{UserID: userID}
+	}
 
 	var txns []model.Transaction
 	db.Where("user_id = ?", userID).

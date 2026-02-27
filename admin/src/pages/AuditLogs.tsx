@@ -26,7 +26,6 @@ const filterItems: FilterItem[] = [
       { label: '订单退款', value: 'order.refund' },
     ],
   },
-  { type: 'input', key: 'admin_name', placeholder: '操作人', width: 150 },
   { type: 'dateRange', key: 'dateRange', placeholder: '操作时间' },
 ];
 
@@ -48,7 +47,7 @@ export default function AuditLogs() {
 
   const columns: ColumnsType<AuditLogListItem> = [
     { title: 'ID', dataIndex: 'id', width: 80 },
-    { title: '操作人', dataIndex: 'admin_name', width: 120 },
+    { title: '操作人', dataIndex: 'admin_email', width: 120 },
     {
       title: '操作类型',
       dataIndex: 'action',
@@ -66,7 +65,7 @@ export default function AuditLogs() {
       render: (v: string, record) => (v ? `${v} #${record.target_id}` : '-'),
     },
     { title: '摘要', dataIndex: 'summary', ellipsis: true },
-    { title: 'IP', dataIndex: 'ip', width: 130 },
+    { title: 'IP', dataIndex: 'ip_address', width: 130 },
     {
       title: '时间',
       dataIndex: 'created_at',

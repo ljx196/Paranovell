@@ -203,7 +203,7 @@ export const useAdminStore = create<AdminState>((set, get) => ({
   initDashboard: async () => {
     set({ isDashboardLoading: true });
     try {
-      await Promise.all([
+      await Promise.allSettled([
         get().fetchDashboardStats(),
         get().fetchTrends('users'),
         get().fetchTrends('revenue'),
@@ -249,15 +249,30 @@ export const useAdminStore = create<AdminState>((set, get) => ({
   },
 
   updateUserStatus: async (id, data) => {
-    await adminApi.updateUserStatus(id, data);
+    try {
+      await adminApi.updateUserStatus(id, data);
+    } catch (error) {
+      console.error('Failed to update user status:', error);
+      throw error;
+    }
   },
 
   adjustBalance: async (id, data) => {
-    await adminApi.adjustBalance(id, data);
+    try {
+      await adminApi.adjustBalance(id, data);
+    } catch (error) {
+      console.error('Failed to adjust balance:', error);
+      throw error;
+    }
   },
 
   resetPassword: async (id) => {
-    return await adminApi.resetPassword(id, { send_email: true });
+    try {
+      return await adminApi.resetPassword(id, { send_email: true });
+    } catch (error) {
+      console.error('Failed to reset password:', error);
+      throw error;
+    }
   },
 
   // ==================== 订单管理 ====================
@@ -328,11 +343,21 @@ export const useAdminStore = create<AdminState>((set, get) => ({
   },
 
   createAnnouncement: async (data) => {
-    await adminApi.createAnnouncement(data);
+    try {
+      await adminApi.createAnnouncement(data);
+    } catch (error) {
+      console.error('Failed to create announcement:', error);
+      throw error;
+    }
   },
 
   deleteAnnouncement: async (id) => {
-    await adminApi.deleteAnnouncement(id);
+    try {
+      await adminApi.deleteAnnouncement(id);
+    } catch (error) {
+      console.error('Failed to delete announcement:', error);
+      throw error;
+    }
   },
 
   // ==================== 系统配置 ====================
@@ -425,11 +450,21 @@ export const useAdminStore = create<AdminState>((set, get) => ({
   },
 
   flagConversation: async (id, data) => {
-    await adminApi.flagConversation(id, data);
+    try {
+      await adminApi.flagConversation(id, data);
+    } catch (error) {
+      console.error('Failed to flag conversation:', error);
+      throw error;
+    }
   },
 
   reviewConversation: async (id, data) => {
-    await adminApi.reviewConversation(id, data);
+    try {
+      await adminApi.reviewConversation(id, data);
+    } catch (error) {
+      console.error('Failed to review conversation:', error);
+      throw error;
+    }
   },
 
   reviews: [],
@@ -469,19 +504,39 @@ export const useAdminStore = create<AdminState>((set, get) => ({
   },
 
   createSensitiveWords: async (data) => {
-    return await adminApi.createSensitiveWords(data);
+    try {
+      return await adminApi.createSensitiveWords(data);
+    } catch (error) {
+      console.error('Failed to create sensitive words:', error);
+      throw error;
+    }
   },
 
   updateSensitiveWord: async (id, data) => {
-    await adminApi.updateSensitiveWord(id, data);
+    try {
+      await adminApi.updateSensitiveWord(id, data);
+    } catch (error) {
+      console.error('Failed to update sensitive word:', error);
+      throw error;
+    }
   },
 
   deleteSensitiveWord: async (id) => {
-    await adminApi.deleteSensitiveWord(id);
+    try {
+      await adminApi.deleteSensitiveWord(id);
+    } catch (error) {
+      console.error('Failed to delete sensitive word:', error);
+      throw error;
+    }
   },
 
   scanContent: async (data) => {
-    return await adminApi.scanContent(data);
+    try {
+      return await adminApi.scanContent(data);
+    } catch (error) {
+      console.error('Failed to scan content:', error);
+      throw error;
+    }
   },
 
   // ==================== 邀请管理 ====================

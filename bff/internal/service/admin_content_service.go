@@ -68,6 +68,9 @@ func (s *AdminContentService) ListConversations(req *dto.AdminConversationListRe
 	if err != nil {
 		return nil, fmt.Errorf("获取对话列表失败: %w", err)
 	}
+	if result == nil || result.Conversations == nil {
+		return &dto.PaginatedResult{Items: []dto.AdminConversationListItem{}, Total: 0}, nil
+	}
 
 	// 查询用户信息
 	var user model.User

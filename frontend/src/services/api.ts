@@ -27,12 +27,39 @@ export interface MessageListResponse {
   page_size: number;
 }
 
+export interface ConversationItem {
+  id: number | string;
+  title: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ConversationsResponse {
+  data?: {
+    conversations?: ConversationItem[];
+  };
+  conversations?: ConversationItem[];
+}
+
+export interface UserProfile {
+  data?: {
+    id: number;
+    email: string;
+    nickname: string;
+    avatar_url: string;
+    email_verified: boolean;
+    invite_code: string;
+    created_at: string;
+  };
+}
+
 interface RequestOptions extends RequestInit {
   skipAuth?: boolean;
 }
 
 class ApiClient {
   private baseUrl: string;
+  private refreshPromise: Promise<boolean> | null = null;
 
   constructor(baseUrl: string) {
     this.baseUrl = baseUrl;
@@ -89,6 +116,20 @@ class ApiClient {
   }
 
   private async refreshToken(): Promise<boolean> {
+    // Deduplicate concurrent refresh attempts
+    if (this.refreshPromise) {
+      return this.refreshPromise;
+    }
+
+    this.refreshPromise = this.doRefreshToken();
+    try {
+      return await this.refreshPromise;
+    } finally {
+      this.refreshPromise = null;
+    }
+  }
+
+  private async doRefreshToken(): Promise<boolean> {
     const refreshToken = useAuthStore.getState().refreshToken;
     if (!refreshToken) return false;
 
@@ -193,8 +234,8 @@ class ApiClient {
   }
 
   // User endpoints
-  async getProfile() {
-    return this.request('/user/profile');
+  async getProfile(): Promise<UserProfile> {
+    return this.request<UserProfile>('/user/profile');
   }
 
   async updateProfile(data: { nickname?: string; avatarUrl?: string }) {
@@ -283,8 +324,8 @@ class ApiClient {
   }
 
   // Chat endpoints
-  async getConversations() {
-    return this.request('/chat/conversations');
+  async getConversations(): Promise<ConversationsResponse> {
+    return this.request<ConversationsResponse>('/chat/conversations');
   }
 
   async createConversation(title?: string) {

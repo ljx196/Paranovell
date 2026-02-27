@@ -368,7 +368,7 @@ export default function UsagePage() {
 
   const loadConversations = async () => {
     try {
-      const response = await api.getConversations() as any;
+      const response = await api.getConversations();
       const apiConversations = response.data?.conversations || [];
       if (apiConversations.length > 0) {
         const formatted: Conversation[] = apiConversations.map((c: any) => ({
@@ -386,7 +386,7 @@ export default function UsagePage() {
 
   const handleTabChange = (tab: UsageTab) => {
     store.setActiveTab(tab);
-    try { router.setParams({ tab }); } catch {}
+    try { router.setParams({ tab }); } catch { /* navigation may not be ready */ }
   };
 
   const handleRefresh = useCallback(async () => {

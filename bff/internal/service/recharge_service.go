@@ -247,7 +247,12 @@ func (s *RechargeService) createPayment(order *model.RechargeOrder) string {
 }
 
 // verifySign 验签（预留）
+// WARNING: 生产环境必须对接支付宝/微信验签 SDK，当前为开发占位
 func (s *RechargeService) verifySign(req *dto.PaymentCallbackRequest) bool {
 	// TODO: 根据支付平台规则实现验签
-	return req.Sign != ""
+	if req.Sign == "" {
+		return false
+	}
+	// 开发阶段允许非空签名通过，生产必须替换为真实验签
+	return true
 }

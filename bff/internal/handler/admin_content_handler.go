@@ -33,7 +33,7 @@ func AdminGetConversations(c *gin.Context) {
 
 	result, err := adminContentService.ListConversations(&req)
 	if err != nil {
-		utils.InternalError(c, "获取对话列表失败: "+err.Error())
+		utils.InternalError(c, "获取对话列表失败")
 		return
 	}
 	utils.Success(c, result)
@@ -212,11 +212,14 @@ func AdminScanContent(c *gin.Context) {
 	adminID, ip := getAdminContext(c)
 
 	var req dto.AdminScanRequest
-	c.ShouldBindJSON(&req)
+	if err := c.ShouldBindJSON(&req); err != nil {
+		utils.BadRequest(c, "参数错误: "+err.Error())
+		return
+	}
 
 	result, err := contentScanService.Scan(adminID, &req, ip)
 	if err != nil {
-		utils.InternalError(c, "扫描失败: "+err.Error())
+		utils.InternalError(c, "扫描失败")
 		return
 	}
 	utils.Success(c, result)

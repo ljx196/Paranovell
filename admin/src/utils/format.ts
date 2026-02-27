@@ -1,16 +1,17 @@
 import dayjs from 'dayjs';
 
 export function formatNumber(n: number): string {
-  return n.toLocaleString();
+  return (n ?? 0).toLocaleString();
 }
 
 export function formatYuan(n: number): string {
-  return `¥${n.toLocaleString('zh-CN', { minimumFractionDigits: 2 })}`;
+  return `¥${(n ?? 0).toLocaleString('zh-CN', { minimumFractionDigits: 2 })}`;
 }
 
 export function formatPoints(amount: number): string {
-  const prefix = amount > 0 ? '+' : '';
-  return `${prefix}${amount.toLocaleString()}`;
+  const v = amount ?? 0;
+  const prefix = v > 0 ? '+' : '';
+  return `${prefix}${v.toLocaleString()}`;
 }
 
 export function formatDateTime(dateStr: string): string {

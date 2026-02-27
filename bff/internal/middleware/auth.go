@@ -43,8 +43,8 @@ func Auth() gin.HandlerFunc {
 			return
 		}
 
-		// 检查是否为 access token
-		if claims.Subject != "" && claims.Subject != "access" {
+		// 检查是否为 access token（拒绝 refresh token 等）
+		if claims.Subject == "refresh" {
 			utils.Unauthorized(c, "无效的 Token 类型")
 			c.Abort()
 			return

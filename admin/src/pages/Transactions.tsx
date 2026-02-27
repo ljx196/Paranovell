@@ -68,7 +68,7 @@ export default function Transactions() {
       title: '余额(后)',
       dataIndex: 'balance_after',
       width: 100,
-      render: (v: number) => v.toLocaleString(),
+      render: (v: number) => (v ?? 0).toLocaleString(),
     },
     { title: '描述', dataIndex: 'description', ellipsis: true },
     {

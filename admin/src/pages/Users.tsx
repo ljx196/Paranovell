@@ -39,7 +39,7 @@ export default function Users() {
     {
       title: '余额(点)',
       dataIndex: 'balance',
-      render: (v: number) => v.toLocaleString(),
+      render: (v: number) => (v ?? 0).toLocaleString(),
       width: 120,
     },
     {

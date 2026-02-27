@@ -51,15 +51,15 @@ export default function Orders() {
     { title: '用户', dataIndex: 'user_email', width: 180, ellipsis: true },
     {
       title: '金额(¥)',
-      dataIndex: 'amount',
+      dataIndex: 'amount_yuan',
       width: 100,
-      render: (v: number) => formatYuan(v),
+      render: (v: number) => formatYuan(v ?? 0),
     },
     {
       title: '点数',
       dataIndex: 'points',
       width: 100,
-      render: (v: number) => v.toLocaleString(),
+      render: (v: number) => (v ?? 0).toLocaleString(),
     },
     { title: '支付方式', dataIndex: 'payment_method', width: 100 },
     {

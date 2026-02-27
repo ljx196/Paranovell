@@ -134,10 +134,6 @@ export default function UserDetail() {
                 <span style={{ color: '#999', minWidth: 80, fontSize: 13 }}>邮箱验证</span>
                 <span style={{ fontSize: 13, fontWeight: 500 }}>{detail.email_verified ? '已验证' : '未验证'}</span>
               </div>
-              <div style={{ display: 'flex', gap: 8 }}>
-                <span style={{ color: '#999', minWidth: 80, fontSize: 13 }}>最后活跃</span>
-                <span style={{ fontSize: 13, fontWeight: 500 }}>{detail.last_active_at ? formatFullDateTime(detail.last_active_at) : '-'}</span>
-              </div>
             </div>
           </Card>
 
@@ -147,20 +143,20 @@ export default function UserDetail() {
               账户余额
             </div>
             <div style={{ fontSize: 32, fontWeight: 700, color: '#1677ff' }}>
-              {detail.balance.toLocaleString()} <span style={{ fontSize: 14, fontWeight: 400, color: '#999' }}>点</span>
+              {(detail.balance.balance ?? 0).toLocaleString()} <span style={{ fontSize: 14, fontWeight: 400, color: '#999' }}>点</span>
             </div>
             <div style={{ display: 'flex', gap: 32, marginTop: 12 }}>
               <div>
                 <div style={{ fontSize: 12, color: '#999' }}>累计充值</div>
-                <div style={{ fontSize: 18, fontWeight: 600, marginTop: 4 }}>{detail.total_recharge?.toLocaleString() ?? 0}</div>
+                <div style={{ fontSize: 18, fontWeight: 600, marginTop: 4 }}>{(detail.balance.total_recharged ?? 0).toLocaleString()}</div>
               </div>
               <div>
                 <div style={{ fontSize: 12, color: '#999' }}>累计消费</div>
-                <div style={{ fontSize: 18, fontWeight: 600, marginTop: 4 }}>{detail.total_consumption?.toLocaleString() ?? 0}</div>
+                <div style={{ fontSize: 18, fontWeight: 600, marginTop: 4 }}>{(detail.balance.total_consumed ?? 0).toLocaleString()}</div>
               </div>
               <div>
                 <div style={{ fontSize: 12, color: '#999' }}>累计赠送</div>
-                <div style={{ fontSize: 18, fontWeight: 600, marginTop: 4 }}>{detail.total_gift?.toLocaleString() ?? 0}</div>
+                <div style={{ fontSize: 18, fontWeight: 600, marginTop: 4 }}>{(detail.balance.total_gifted ?? 0).toLocaleString()}</div>
               </div>
             </div>
             <div style={{ marginTop: 16 }}>
@@ -206,7 +202,7 @@ export default function UserDetail() {
           <AdjustBalanceModal
             open={adjustOpen}
             userId={userId}
-            currentBalance={detail.balance}
+            currentBalance={detail.balance.balance}
             onClose={() => setAdjustOpen(false)}
             onSuccess={() => { setAdjustOpen(false); refresh(); }}
           />

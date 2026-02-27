@@ -50,13 +50,12 @@ export interface LoginResponse {
 
 export interface DashboardStats {
   total_users: number;
-  active_users: number;
+  today_active: number;
   today_new_users: number;
-  today_revenue: number;
-  yesterday_users: number;
+  today_revenue_yuan: number;
   yesterday_active: number;
   yesterday_new_users: number;
-  yesterday_revenue: number;
+  yesterday_revenue_yuan: number;
 }
 
 export interface TrendItem {
@@ -73,9 +72,10 @@ export interface TrendParams {
 
 export interface RecentLog {
   id: number;
-  admin_name: string;
+  admin_email: string;
   action: string;
-  target_name: string;
+  action_label: string;
+  target: string;
   summary: string;
   created_at: string;
 }
@@ -110,11 +110,12 @@ export interface UserDetail {
   invite_code: string;
   email_verified: boolean;
   created_at: string;
-  last_active_at: string;
-  balance: number;
-  total_recharge: number;
-  total_consumption: number;
-  total_gift: number;
+  balance: {
+    balance: number;
+    total_recharged: number;
+    total_consumed: number;
+    total_gifted: number;
+  };
   recent_transactions: UserTransaction[];
 }
 
@@ -153,7 +154,7 @@ export interface OrderListItem {
   order_no: string;
   user_id: number;
   user_email: string;
-  amount: number;
+  amount_yuan: number;
   points: number;
   payment_method: string;
   status: OrderStatus;
@@ -206,8 +207,8 @@ export interface AnnouncementListItem {
   title: string;
   content: string;
   target: AnnouncementTarget;
-  recipient_count: number;
-  read_rate: number;
+  target_count: number;
+  read_count: number;
   created_at: string;
 }
 
@@ -228,10 +229,10 @@ export interface CreateAnnouncementRequest {
 // ==================== 系统配置 ====================
 
 export interface SystemConfigItem {
-  key: string;
-  value: string;
-  value_type: 'string' | 'number' | 'bool' | 'json';
+  config_key: string;
+  config_value: unknown;
   description: string;
+  updated_by: number;
   updated_at: string;
 }
 
@@ -259,12 +260,13 @@ export type AuditTargetType = 'user' | 'order' | 'message' | 'config';
 export interface AuditLogListItem {
   id: number;
   admin_id: number;
-  admin_name: string;
+  admin_email: string;
   action: AuditAction;
+  action_label: string;
   target_type: AuditTargetType;
   target_id: string;
   summary: string;
-  ip: string;
+  ip_address: string;
   created_at: string;
 }
 
@@ -274,7 +276,7 @@ export interface AuditLogDetail extends AuditLogListItem {
 
 export interface AuditLogListParams extends PaginationParams, DateRangeParams {
   action?: AuditAction;
-  admin_name?: string;
+  admin_id?: number;
   target_type?: AuditTargetType;
 }
 

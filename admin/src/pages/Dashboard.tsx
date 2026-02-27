@@ -40,14 +40,14 @@ export default function Dashboard() {
         <StatCard
           title="总用户数"
           value={stats?.total_users ?? 0}
-          yesterdayValue={stats?.yesterday_users ?? 0}
+          yesterdayValue={undefined}
           icon={<UserOutlined />}
           iconBg={icons.users.bg}
           iconColor={icons.users.color}
         />
         <StatCard
           title="活跃用户"
-          value={stats?.active_users ?? 0}
+          value={stats?.today_active ?? 0}
           yesterdayValue={stats?.yesterday_active ?? 0}
           icon={<ThunderboltOutlined />}
           iconBg={icons.active.bg}
@@ -63,9 +63,9 @@ export default function Dashboard() {
         />
         <StatCard
           title="今日收入"
-          value={stats?.today_revenue ?? 0}
+          value={stats?.today_revenue_yuan ?? 0}
           prefix="¥"
-          yesterdayValue={stats?.yesterday_revenue ?? 0}
+          yesterdayValue={stats?.yesterday_revenue_yuan ?? 0}
           icon={<DollarOutlined />}
           iconBg={icons.revenue.bg}
           iconColor={icons.revenue.color}

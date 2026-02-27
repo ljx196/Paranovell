@@ -38,7 +38,7 @@ export default function Referrals() {
     { title: '总奖励发放', value: referralStats.total_rewards_points, icon: <GiftOutlined />, color: '#52c41a', suffix: '积分' },
     { title: '今日邀请', value: referralStats.today_referrals, icon: <RiseOutlined />, color: '#faad14' },
     { title: '今日奖励', value: referralStats.today_rewards_points, icon: <GiftOutlined />, color: '#722ed1', suffix: '积分' },
-    { title: '有效邀请率', value: (referralStats.active_referral_rate * 100).toFixed(1), icon: <TrophyOutlined />, color: '#13c2c2', suffix: '%' },
+    { title: '有效邀请率', value: ((referralStats.active_referral_rate ?? 0) * 100).toFixed(1), icon: <TrophyOutlined />, color: '#13c2c2', suffix: '%' },
   ] : [];
 
   const columns: ColumnsType<ReferralListItem> = [

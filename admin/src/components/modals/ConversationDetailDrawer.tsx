@@ -54,7 +54,7 @@ export default function ConversationDetailDrawer({ open, conversation, onClose, 
     const parts = content.split(regex);
 
     return parts.map((part, i) => {
-      if (regex.test(part)) {
+      if (i % 2 === 1) {
         return <span key={i} style={{ background: '#ff4d4f30', color: '#ff4d4f', fontWeight: 600, padding: '0 2px', borderRadius: 2 }}>{part}</span>;
       }
       return part;

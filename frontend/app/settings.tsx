@@ -52,7 +52,7 @@ export default function SettingsPage() {
   useEffect(() => {
     if (store.activeTab !== activeTab && ['overview', 'transactions', 'recharge'].includes(store.activeTab)) {
       setActiveTab(store.activeTab as SettingsTab);
-      try { router.setParams({ tab: store.activeTab }); } catch {}
+      try { router.setParams({ tab: store.activeTab }); } catch { /* navigation may not be ready */ }
     }
   }, [store.activeTab]);
 
@@ -65,7 +65,7 @@ export default function SettingsPage() {
 
   const loadConversations = async () => {
     try {
-      const response = await api.getConversations() as any;
+      const response = await api.getConversations();
       const apiConversations = response.data?.conversations || [];
       if (apiConversations.length > 0) {
         const formatted: Conversation[] = apiConversations.map((c: any) => ({
@@ -94,7 +94,7 @@ export default function SettingsPage() {
     if (tab === 'overview' || tab === 'transactions' || tab === 'recharge') {
       store.setActiveTab(tab);
     }
-    try { router.setParams({ tab }); } catch {}
+    try { router.setParams({ tab }); } catch { /* navigation may not be ready */ }
   };
 
   const handleRefresh = useCallback(async () => {
