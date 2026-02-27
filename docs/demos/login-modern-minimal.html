@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GenNovel Login - Modern Minimal Demo</title>
+<style>
+  /* ========== Reset & Base ========== */
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    /* Dark theme (default) */
+    --bg-primary: #141414;
+    --bg-secondary: #1C1C1C;
+    --text-primary: #EAE6DF;
+    --text-secondary: #A8A29E;
+    --text-muted: #6B6560;
+    --accent: #D4836A;
+    --accent-hover: #E09478;
+    --border: #2A2A2A;
+    --input-border: #333;
+    --input-focus: #D4836A;
+    --error: #EF4444;
+  }
+
+  .light {
+    --bg-primary: #FAFAF9;
+    --bg-secondary: #FFFFFF;
+    --text-primary: #1C1917;
+    --text-secondary: #57534E;
+    --text-muted: #A8A29E;
+    --accent: #C4704F;
+    --accent-hover: #B5614A;
+    --border: #E7E5E4;
+    --input-border: #D6D3D1;
+    --input-focus: #C4704F;
+    --error: #DC2626;
+  }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans SC", sans-serif;
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.3s, color 0.3s;
+  }
+
+  /* ========== Theme Toggle ========== */
+  .theme-toggle {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    border: 1px solid var(--border);
+    background: var(--bg-secondary);
+    color: var(--text-secondary);
+    cursor: pointer;
+    font-size: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+    z-index: 10;
+  }
+  .theme-toggle:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+
+  /* ========== Login Container ========== */
+  .login-container {
+    width: 100%;
+    max-width: 360px;
+    padding: 24px;
+  }
+
+  /* ========== Logo ========== */
+  .logo-area {
+    text-align: center;
+    margin-bottom: 56px;
+  }
+  .logo-mark {
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+  .logo-icon {
+    width: 40px;
+    height: 40px;
+    background: var(--accent);
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-size: 20px;
+    font-weight: 700;
+  }
+  .logo-wordmark {
+    font-size: 24px;
+    font-weight: 600;
+    letter-spacing: -0.5px;
+    color: var(--text-primary);
+  }
+  .logo-subtitle {
+    font-size: 15px;
+    color: var(--text-muted);
+    font-weight: 400;
+  }
+
+  /* ========== Form ========== */
+  .form-group {
+    margin-bottom: 28px;
+    position: relative;
+  }
+  .form-label {
+    display: block;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-secondary);
+    margin-bottom: 8px;
+    letter-spacing: 0.3px;
+  }
+  .form-input {
+    width: 100%;
+    padding: 12px 0;
+    font-size: 15px;
+    color: var(--text-primary);
+    background: transparent;
+    border: none;
+    border-bottom: 1.5px solid var(--input-border);
+    outline: none;
+    transition: border-color 0.2s;
+    font-family: inherit;
+  }
+  .form-input::placeholder {
+    color: var(--text-muted);
+  }
+  .form-input:focus {
+    border-bottom-color: var(--input-focus);
+  }
+
+  /* Password toggle */
+  .password-wrapper {
+    position: relative;
+  }
+  .password-wrapper .form-input {
+    padding-right: 40px;
+  }
+  .eye-toggle {
+    position: absolute;
+    right: 0;
+    bottom: 10px;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: var(--text-muted);
+    transition: color 0.15s;
+    background: none;
+    border: none;
+    font-size: 18px;
+  }
+  .eye-toggle:hover {
+    color: var(--text-secondary);
+  }
+
+  /* Error */
+  .error-msg {
+    font-size: 13px;
+    color: var(--error);
+    margin-top: 6px;
+    display: none;
+    align-items: center;
+    gap: 4px;
+  }
+  .error-msg.show {
+    display: flex;
+  }
+
+  /* ========== Button ========== */
+  .btn-primary {
+    width: 100%;
+    padding: 14px;
+    font-size: 15px;
+    font-weight: 500;
+    color: #fff;
+    background: var(--accent);
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background 0.15s, transform 0.1s;
+    font-family: inherit;
+    margin-top: 8px;
+  }
+  .btn-primary:hover {
+    background: var(--accent-hover);
+  }
+  .btn-primary:active {
+    transform: scale(0.985);
+  }
+  .btn-primary:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+
+  /* ========== Divider ========== */
+  .divider {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin: 32px 0;
+    color: var(--text-muted);
+    font-size: 13px;
+  }
+  .divider::before, .divider::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  /* ========== Links ========== */
+  .links {
+    text-align: center;
+    margin-top: 32px;
+  }
+  .links a {
+    color: var(--text-secondary);
+    text-decoration: none;
+    font-size: 14px;
+    padding: 8px 12px;
+    border-radius: 6px;
+    transition: color 0.15s, background 0.15s;
+  }
+  .links a:hover {
+    color: var(--accent);
+    background: rgba(212, 131, 106, 0.08);
+  }
+  .links .separator {
+    color: var(--border);
+    margin: 0 4px;
+    user-select: none;
+  }
+
+  /* ========== Footer ========== */
+  .footer {
+    text-align: center;
+    margin-top: 48px;
+    color: var(--text-muted);
+    font-size: 12px;
+  }
+
+  /* ========== Focus Ring (a11y) ========== */
+  .form-input:focus-visible {
+    border-bottom-color: var(--input-focus);
+  }
+  .btn-primary:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+  .links a:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+
+  /* ========== Mobile ========== */
+  @media (max-width: 480px) {
+    .login-container {
+      padding: 20px 20px;
+    }
+    .logo-area {
+      margin-bottom: 40px;
+    }
+  }
+</style>
+</head>
+<body>
+
+<button class="theme-toggle" onclick="toggleTheme()" title="Toggle theme">
+  <svg class="icon-moon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+  <svg class="icon-sun" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:none"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+</button>
+
+<div class="login-container">
+
+  <!-- Logo -->
+  <div class="logo-area">
+    <div class="logo-mark">
+      <div class="logo-icon">G</div>
+      <span class="logo-wordmark">GenNovel</span>
+    </div>
+    <div class="logo-subtitle">AI 驱动的小说创作平台</div>
+  </div>
+
+  <!-- Form -->
+  <form id="loginForm" onsubmit="handleLogin(event)">
+
+    <div class="form-group">
+      <label class="form-label" for="email">邮箱</label>
+      <input class="form-input" id="email" type="email" placeholder="name@example.com" autocomplete="email" />
+      <div class="error-msg" id="emailError">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        <span>请输入邮箱地址</span>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label" for="password">密码</label>
+      <div class="password-wrapper">
+        <input class="form-input" id="password" type="password" placeholder="输入密码" autocomplete="current-password" />
+        <button type="button" class="eye-toggle" onclick="togglePassword()" aria-label="显示密码">
+          <svg class="icon-eye" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+          <svg class="icon-eye-off" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:none"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+        </button>
+      </div>
+      <div class="error-msg" id="passwordError">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        <span>请输入密码</span>
+      </div>
+    </div>
+
+    <button class="btn-primary" type="submit" id="submitBtn">登录</button>
+  </form>
+
+  <!-- Divider -->
+  <div class="divider">或</div>
+
+  <!-- Links -->
+  <div class="links">
+    <a href="#">创建账户</a>
+    <span class="separator">|</span>
+    <a href="#">忘记密码?</a>
+  </div>
+
+  <!-- Footer -->
+  <div class="footer">
+    &copy; 2025 GenNovel. All rights reserved.
+  </div>
+</div>
+
+<script>
+  // Theme toggle
+  function toggleTheme() {
+    document.body.classList.toggle('light');
+    const isLight = document.body.classList.contains('light');
+    document.querySelector('.icon-moon').style.display = isLight ? 'none' : 'block';
+    document.querySelector('.icon-sun').style.display = isLight ? 'block' : 'none';
+  }
+
+  // Password visibility
+  function togglePassword() {
+    const input = document.getElementById('password');
+    const eyeOn = document.querySelector('.icon-eye');
+    const eyeOff = document.querySelector('.icon-eye-off');
+    if (input.type === 'password') {
+      input.type = 'text';
+      eyeOn.style.display = 'none';
+      eyeOff.style.display = 'block';
+    } else {
+      input.type = 'password';
+      eyeOn.style.display = 'block';
+      eyeOff.style.display = 'none';
+    }
+  }
+
+  // Form validation
+  function handleLogin(e) {
+    e.preventDefault();
+    const email = document.getElementById('email');
+    const password = document.getElementById('password');
+    const emailErr = document.getElementById('emailError');
+    const passErr = document.getElementById('passwordError');
+    let valid = true;
+
+    emailErr.classList.remove('show');
+    passErr.classList.remove('show');
+
+    if (!email.value.trim()) {
+      emailErr.classList.add('show');
+      valid = false;
+    }
+    if (!password.value.trim()) {
+      passErr.classList.add('show');
+      valid = false;
+    }
+    if (!valid) return;
+
+    // Simulate loading
+    const btn = document.getElementById('submitBtn');
+    btn.disabled = true;
+    btn.textContent = '登录中...';
+    setTimeout(() => {
+      btn.disabled = false;
+      btn.textContent = '登录';
+      alert('Demo: 登录成功!');
+    }, 1500);
+  }
+
+  // Clear errors on input
+  document.getElementById('email').addEventListener('input', () => {
+    document.getElementById('emailError').classList.remove('show');
+  });
+  document.getElementById('password').addEventListener('input', () => {
+    document.getElementById('passwordError').classList.remove('show');
+  });
+</script>
+</body>
+</html>

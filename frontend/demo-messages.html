@@ -1,0 +1,1425 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>系统消息 - GenNovel</title>
+  <style>
+    :root {
+      /* 深色主题 */
+      --bg-primary: #1A1A1A;
+      --bg-secondary: #262626;
+      --bg-tertiary: #2A2A2A;
+      --text-primary: #EAE6DF;
+      --text-secondary: #A8A29E;
+      --text-muted: #6B6560;
+      --accent: #D4836A;
+      --accent-hover: #E09478;
+      --border: #333333;
+      --danger: #E57373;
+    }
+
+    .light-theme {
+      --bg-primary: #FFFFFF;
+      --bg-secondary: #F5F5F5;
+      --bg-tertiary: #EBEBEB;
+      --text-primary: #1A1A1A;
+      --text-secondary: #666666;
+      --text-muted: #999999;
+      --border: #E5E5E5;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      background-color: var(--bg-primary);
+      color: var(--text-primary);
+      min-height: 100vh;
+      transition: background-color 0.3s, color 0.3s;
+    }
+
+    /* 滚动条 */
+    ::-webkit-scrollbar {
+      width: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: var(--border);
+      border-radius: 3px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: var(--text-muted);
+    }
+
+    /* 布局容器 */
+    .app-container {
+      display: flex;
+      height: 100vh;
+    }
+
+    /* 侧边栏 */
+    .sidebar {
+      width: 260px;
+      background-color: var(--bg-secondary);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      flex-shrink: 0;
+    }
+
+    .sidebar-header {
+      padding: 16px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .logo {
+      font-size: 18px;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .new-chat-btn {
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: none;
+      color: var(--text-primary);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      transition: all 0.2s;
+    }
+
+    .new-chat-btn:hover {
+      background-color: var(--bg-tertiary);
+      border-color: var(--text-muted);
+    }
+
+    .sidebar-content {
+      flex: 1;
+      padding: 12px;
+      overflow-y: auto;
+    }
+
+    .sidebar-section-title {
+      font-size: 12px;
+      color: var(--text-muted);
+      padding: 8px 12px;
+      text-transform: uppercase;
+    }
+
+    .chat-item {
+      display: flex;
+      align-items: center;
+      padding: 12px;
+      border-radius: 8px;
+      cursor: pointer;
+      color: var(--text-secondary);
+      transition: all 0.2s;
+      margin-bottom: 2px;
+    }
+
+    .chat-item:hover {
+      background-color: var(--bg-tertiary);
+    }
+
+    .chat-item.active {
+      background-color: rgba(212, 131, 106, 0.15);
+      color: var(--text-primary);
+    }
+
+    .chat-item-icon {
+      margin-right: 12px;
+      font-size: 16px;
+    }
+
+    .chat-item-text {
+      flex: 1;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      font-size: 14px;
+    }
+
+    /* 用户区域 */
+    .sidebar-footer {
+      padding: 12px;
+      border-top: 1px solid var(--border);
+      position: relative;
+    }
+
+    .user-info {
+      display: flex;
+      align-items: center;
+      padding: 8px;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background-color 0.2s;
+    }
+
+    .user-info:hover {
+      background-color: var(--bg-tertiary);
+    }
+
+    .user-avatar {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--accent), #B8725C);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-weight: 600;
+      margin-right: 12px;
+      flex-shrink: 0;
+    }
+
+    .user-details {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .user-name {
+      font-size: 14px;
+      color: var(--text-primary);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .user-email {
+      font-size: 12px;
+      color: var(--text-muted);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .user-menu-arrow {
+      color: var(--text-muted);
+      font-size: 12px;
+      margin-left: 8px;
+    }
+
+    /* 用户弹出菜单 */
+    .user-menu {
+      position: absolute;
+      bottom: 100%;
+      left: 12px;
+      right: 12px;
+      background-color: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 8px;
+      margin-bottom: 8px;
+      box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.3);
+      opacity: 0;
+      visibility: hidden;
+      transform: translateY(10px);
+      transition: all 0.2s;
+      z-index: 100;
+    }
+
+    .user-menu.show {
+      opacity: 1;
+      visibility: visible;
+      transform: translateY(0);
+    }
+
+    .user-menu-item {
+      display: flex;
+      align-items: center;
+      padding: 10px 12px;
+      border-radius: 8px;
+      cursor: pointer;
+      color: var(--text-secondary);
+      transition: all 0.2s;
+      font-size: 14px;
+    }
+
+    .user-menu-item:hover {
+      background-color: var(--bg-tertiary);
+      color: var(--text-primary);
+    }
+
+    .user-menu-item.danger {
+      color: var(--danger);
+    }
+
+    .user-menu-item.danger:hover {
+      background-color: rgba(229, 115, 115, 0.1);
+    }
+
+    .user-menu-item-icon {
+      margin-right: 12px;
+      font-size: 16px;
+      width: 20px;
+      text-align: center;
+    }
+
+    .user-menu-item-text {
+      flex: 1;
+    }
+
+    .user-menu-badge {
+      min-width: 18px;
+      height: 18px;
+      padding: 0 6px;
+      background-color: var(--accent);
+      color: white;
+      font-size: 11px;
+      font-weight: 600;
+      border-radius: 9px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .user-menu-divider {
+      height: 1px;
+      background-color: var(--border);
+      margin: 8px 0;
+    }
+
+    /* 主内容区 */
+    .main-content {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    /* 顶部栏 */
+    .header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 24px;
+      border-bottom: 1px solid var(--border);
+      background-color: var(--bg-primary);
+    }
+
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .header-title {
+      font-size: 16px;
+      font-weight: 500;
+      color: var(--text-primary);
+    }
+
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .header-btn {
+      width: 36px;
+      height: 36px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 18px;
+      transition: background-color 0.2s;
+      position: relative;
+      border: none;
+      background: none;
+      color: var(--text-primary);
+    }
+
+    .header-btn:hover {
+      background-color: var(--bg-secondary);
+    }
+
+    .header-btn .unread-badge {
+      position: absolute;
+      top: 2px;
+      right: 2px;
+      min-width: 16px;
+      height: 16px;
+      padding: 0 4px;
+      background-color: var(--accent);
+      color: white;
+      font-size: 10px;
+      font-weight: 600;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* 通知悬浮面板 */
+    .notification-dropdown {
+      position: absolute;
+      top: 100%;
+      right: 0;
+      width: 360px;
+      max-height: 480px;
+      background-color: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+      opacity: 0;
+      visibility: hidden;
+      transform: translateY(8px);
+      transition: all 0.2s ease;
+      z-index: 200;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .notification-btn-wrapper {
+      position: relative;
+    }
+
+    .notification-btn-wrapper:hover .notification-dropdown {
+      opacity: 1;
+      visibility: visible;
+      transform: translateY(4px);
+    }
+
+    .notification-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .notification-title {
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .notification-mark-read {
+      font-size: 13px;
+      color: var(--accent);
+      cursor: pointer;
+      background: none;
+      border: none;
+      padding: 4px 8px;
+      border-radius: 4px;
+      transition: background-color 0.2s;
+    }
+
+    .notification-mark-read:hover {
+      background-color: rgba(212, 131, 106, 0.1);
+    }
+
+    .notification-list {
+      flex: 1;
+      overflow-y: auto;
+      max-height: 360px;
+    }
+
+    .notification-item {
+      display: flex;
+      align-items: flex-start;
+      padding: 12px 16px;
+      cursor: pointer;
+      transition: background-color 0.2s;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .notification-item:last-child {
+      border-bottom: none;
+    }
+
+    .notification-item:hover {
+      background-color: var(--bg-tertiary);
+    }
+
+    .notification-item-icon {
+      width: 32px;
+      height: 32px;
+      border-radius: 16px;
+      background-color: rgba(212, 131, 106, 0.1);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      margin-right: 12px;
+      flex-shrink: 0;
+    }
+
+    .notification-item-content {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .notification-item-title {
+      font-size: 14px;
+      color: var(--text-secondary);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      margin-bottom: 2px;
+    }
+
+    .notification-item.unread .notification-item-title {
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .notification-item-preview {
+      font-size: 12px;
+      color: var(--text-muted);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      margin-bottom: 2px;
+    }
+
+    .notification-item-time {
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+
+    .notification-item-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background-color: var(--accent);
+      margin-left: 8px;
+      margin-top: 6px;
+      flex-shrink: 0;
+    }
+
+    .notification-footer {
+      padding: 12px 16px;
+      border-top: 1px solid var(--border);
+      text-align: center;
+    }
+
+    .notification-view-all {
+      font-size: 13px;
+      color: var(--accent);
+      cursor: pointer;
+      background: none;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 8px;
+      transition: background-color 0.2s;
+      width: 100%;
+    }
+
+    .notification-view-all:hover {
+      background-color: rgba(212, 131, 106, 0.1);
+    }
+
+    .notification-empty {
+      padding: 40px 20px;
+      text-align: center;
+      color: var(--text-muted);
+    }
+
+    .notification-empty-icon {
+      font-size: 32px;
+      margin-bottom: 8px;
+    }
+
+    .notification-empty-text {
+      font-size: 13px;
+    }
+
+    /* 页面切换 */
+    .page {
+      display: none;
+      flex: 1;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .page.active {
+      display: flex;
+    }
+
+    /* 聊天页面 */
+    .chat-page {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .chat-messages {
+      flex: 1;
+      padding: 24px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .chat-welcome {
+      text-align: center;
+      color: var(--text-muted);
+    }
+
+    .chat-welcome-icon {
+      font-size: 48px;
+      margin-bottom: 16px;
+    }
+
+    .chat-welcome-title {
+      font-size: 24px;
+      color: var(--text-primary);
+      margin-bottom: 8px;
+    }
+
+    .chat-welcome-subtitle {
+      font-size: 14px;
+    }
+
+    .chat-input-area {
+      padding: 16px 24px 24px;
+    }
+
+    .chat-input-box {
+      display: flex;
+      align-items: center;
+      padding: 12px 16px;
+      background-color: var(--bg-secondary);
+      border-radius: 24px;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    }
+
+    .chat-input {
+      flex: 1;
+      border: none;
+      background: none;
+      color: var(--text-primary);
+      font-size: 15px;
+      outline: none;
+    }
+
+    .chat-input::placeholder {
+      color: var(--text-muted);
+    }
+
+    .chat-send-btn {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      border: none;
+      background-color: var(--accent);
+      color: white;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      margin-left: 8px;
+      transition: background-color 0.2s;
+    }
+
+    .chat-send-btn:hover {
+      background-color: var(--accent-hover);
+    }
+
+    /* 消息页面 Header */
+    .messages-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 24px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .messages-header-left {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .back-btn {
+      width: 36px;
+      height: 36px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 8px;
+      cursor: pointer;
+      color: var(--text-primary);
+      font-size: 20px;
+      transition: background-color 0.2s;
+    }
+
+    .back-btn:hover {
+      background-color: var(--bg-secondary);
+    }
+
+    .page-title {
+      font-size: 20px;
+      font-weight: 600;
+    }
+
+    .mark-all-btn {
+      padding: 8px 16px;
+      border-radius: 8px;
+      background: none;
+      border: none;
+      color: var(--accent);
+      font-size: 14px;
+      cursor: pointer;
+      transition: background-color 0.2s;
+    }
+
+    .mark-all-btn:hover {
+      background-color: rgba(212, 131, 106, 0.1);
+    }
+
+    .mark-all-btn:disabled {
+      color: var(--text-muted);
+      cursor: not-allowed;
+    }
+
+    /* 消息内容区 */
+    .messages-container {
+      flex: 1;
+      overflow-y: auto;
+      padding: 24px;
+    }
+
+    /* Tab 栏 */
+    .tabs {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 20px;
+    }
+
+    .tab {
+      padding: 8px 16px;
+      border-radius: 20px;
+      cursor: pointer;
+      font-size: 14px;
+      color: var(--text-secondary);
+      transition: all 0.2s;
+      border: none;
+      background: none;
+    }
+
+    .tab:hover {
+      background-color: var(--bg-secondary);
+    }
+
+    .tab.active {
+      background-color: rgba(212, 131, 106, 0.15);
+      color: var(--accent);
+      font-weight: 600;
+    }
+
+    /* 消息列表 */
+    .message-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    /* 消息卡片 */
+    .message-card {
+      display: flex;
+      align-items: flex-start;
+      padding: 16px;
+      background-color: var(--bg-secondary);
+      border-radius: 12px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .message-card:hover {
+      background-color: var(--bg-tertiary);
+      transform: translateY(-1px);
+    }
+
+    .message-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 20px;
+      background-color: rgba(212, 131, 106, 0.1);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      margin-right: 12px;
+      flex-shrink: 0;
+    }
+
+    .message-content {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .message-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 4px;
+    }
+
+    .message-title {
+      font-size: 16px;
+      font-weight: 400;
+      color: var(--text-secondary);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      margin-right: 12px;
+    }
+
+    .message-card.unread .message-title {
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .message-time {
+      font-size: 12px;
+      color: var(--text-muted);
+      flex-shrink: 0;
+    }
+
+    .message-preview {
+      font-size: 14px;
+      color: var(--text-muted);
+      line-height: 1.5;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
+    .unread-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background-color: var(--accent);
+      margin-left: 12px;
+      margin-top: 6px;
+      flex-shrink: 0;
+    }
+
+    /* 空状态 */
+    .empty-state {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 60px 20px;
+      color: var(--text-muted);
+    }
+
+    .empty-icon {
+      font-size: 48px;
+      margin-bottom: 12px;
+    }
+
+    .empty-text {
+      font-size: 15px;
+    }
+
+    /* 加载更多 */
+    .load-more {
+      text-align: center;
+      padding: 20px;
+      color: var(--text-muted);
+      font-size: 13px;
+    }
+
+    /* Modal 遮罩 */
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: rgba(0, 0, 0, 0.6);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      z-index: 1000;
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.2s, visibility 0.2s;
+    }
+
+    .modal-overlay.show {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    /* Modal 内容 */
+    .modal {
+      width: 100%;
+      max-width: 480px;
+      max-height: 80vh;
+      background-color: var(--bg-secondary);
+      border-radius: 16px;
+      padding: 24px;
+      position: relative;
+      transform: scale(0.95);
+      transition: transform 0.2s;
+      overflow-y: auto;
+    }
+
+    .modal-overlay.show .modal {
+      transform: scale(1);
+    }
+
+    .modal-close {
+      position: absolute;
+      top: 16px;
+      right: 16px;
+      width: 32px;
+      height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      color: var(--text-muted);
+      font-size: 20px;
+      border-radius: 8px;
+      transition: background-color 0.2s;
+    }
+
+    .modal-close:hover {
+      background-color: var(--bg-tertiary);
+    }
+
+    .modal-header {
+      display: flex;
+      align-items: center;
+      margin-bottom: 8px;
+      padding-right: 32px;
+    }
+
+    .modal-icon {
+      font-size: 24px;
+      margin-right: 12px;
+    }
+
+    .modal-title {
+      font-size: 18px;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .modal-time {
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-bottom: 16px;
+    }
+
+    .modal-divider {
+      height: 1px;
+      background-color: var(--border);
+      margin-bottom: 16px;
+    }
+
+    .modal-content {
+      font-size: 15px;
+      line-height: 1.7;
+      color: var(--text-secondary);
+      white-space: pre-wrap;
+    }
+
+    /* 响应式 */
+    @media (max-width: 768px) {
+      .sidebar {
+        display: none;
+      }
+
+      .header {
+        padding: 12px 16px;
+      }
+
+      .messages-container {
+        padding: 16px;
+      }
+
+      .messages-header {
+        padding: 12px 16px;
+      }
+
+      .page-title {
+        font-size: 18px;
+      }
+    }
+
+    /* 提示气泡 */
+    .tooltip {
+      position: fixed;
+      background-color: var(--bg-tertiary);
+      color: var(--text-primary);
+      padding: 8px 12px;
+      border-radius: 8px;
+      font-size: 13px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.2s;
+      z-index: 1001;
+    }
+
+    .tooltip.show {
+      opacity: 1;
+    }
+  </style>
+</head>
+<body>
+  <div class="app-container">
+    <!-- 侧边栏 -->
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <div class="logo">GenNovel</div>
+        <button class="new-chat-btn" title="新建对话">+</button>
+      </div>
+      <div class="sidebar-content">
+        <div class="sidebar-section-title">最近对话</div>
+        <div class="chat-item active">
+          <span class="chat-item-icon">💬</span>
+          <span class="chat-item-text">武侠小说创作</span>
+        </div>
+        <div class="chat-item">
+          <span class="chat-item-icon">💬</span>
+          <span class="chat-item-text">科幻故事大纲</span>
+        </div>
+        <div class="chat-item">
+          <span class="chat-item-icon">💬</span>
+          <span class="chat-item-text">角色设定讨论</span>
+        </div>
+      </div>
+
+      <!-- 用户区域 -->
+      <div class="sidebar-footer">
+        <!-- 弹出菜单 -->
+        <div class="user-menu" id="user-menu">
+          <div class="user-menu-item" onclick="navigateTo('messages')">
+            <span class="user-menu-item-icon">🔔</span>
+            <span class="user-menu-item-text">系统消息</span>
+            <span class="user-menu-badge" id="menu-unread-badge">3</span>
+          </div>
+          <div class="user-menu-item" onclick="showTooltip('用量统计页面开发中')">
+            <span class="user-menu-item-icon">📊</span>
+            <span class="user-menu-item-text">用量统计</span>
+          </div>
+          <div class="user-menu-item" onclick="showTooltip('设置页面开发中')">
+            <span class="user-menu-item-icon">⚙️</span>
+            <span class="user-menu-item-text">设置</span>
+          </div>
+          <div class="user-menu-divider"></div>
+          <div class="user-menu-item" onclick="toggleTheme()">
+            <span class="user-menu-item-icon" id="menu-theme-icon">☀️</span>
+            <span class="user-menu-item-text" id="menu-theme-text">浅色模式</span>
+          </div>
+          <div class="user-menu-divider"></div>
+          <div class="user-menu-item danger" onclick="showTooltip('已退出登录')">
+            <span class="user-menu-item-icon">🚪</span>
+            <span class="user-menu-item-text">退出登录</span>
+          </div>
+        </div>
+
+        <div class="user-info" onclick="toggleUserMenu()">
+          <div class="user-avatar">U</div>
+          <div class="user-details">
+            <div class="user-name">用户昵称</div>
+            <div class="user-email">user@example.com</div>
+          </div>
+          <span class="user-menu-arrow">▲</span>
+        </div>
+      </div>
+    </aside>
+
+    <!-- 主内容区 -->
+    <main class="main-content">
+      <!-- 聊天页面 -->
+      <div class="page active" id="chat-page">
+        <!-- 顶部栏 -->
+        <header class="header">
+          <div class="header-left">
+            <span class="header-title">武侠小说创作</span>
+          </div>
+          <div class="header-right">
+            <!-- 通知铃铛带悬浮面板 -->
+            <div class="notification-btn-wrapper">
+              <button class="header-btn" onclick="navigateTo('messages')" title="系统消息">
+                🔔
+                <span class="unread-badge" id="header-unread-badge">3</span>
+              </button>
+              <!-- 悬浮通知面板 -->
+              <div class="notification-dropdown" id="notification-dropdown">
+                <div class="notification-header">
+                  <span class="notification-title">系统消息</span>
+                  <button class="notification-mark-read" onclick="event.stopPropagation(); markAllAsRead();">全部已读</button>
+                </div>
+                <div class="notification-list" id="notification-list">
+                  <!-- 通知列表由 JS 渲染 -->
+                </div>
+                <div class="notification-footer">
+                  <button class="notification-view-all" onclick="navigateTo('messages')">查看全部消息</button>
+                </div>
+              </div>
+            </div>
+            <button class="header-btn" onclick="toggleTheme()" title="切换主题">
+              <span id="theme-icon">☀️</span>
+            </button>
+          </div>
+        </header>
+
+        <!-- 聊天内容 -->
+        <div class="chat-page">
+          <div class="chat-messages">
+            <div class="chat-welcome">
+              <div class="chat-welcome-icon">✨</div>
+              <div class="chat-welcome-title">开始创作</div>
+              <div class="chat-welcome-subtitle">输入你的想法，让 AI 帮你创作精彩故事</div>
+            </div>
+          </div>
+          <div class="chat-input-area">
+            <div class="chat-input-box">
+              <input type="text" class="chat-input" placeholder="输入消息..." />
+              <button class="chat-send-btn">↑</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 消息页面 -->
+      <div class="page" id="messages-page">
+        <!-- 消息页面 Header -->
+        <div class="messages-header">
+          <div class="messages-header-left">
+            <div class="back-btn" onclick="navigateTo('chat')">←</div>
+            <h1 class="page-title">系统消息</h1>
+          </div>
+          <button class="mark-all-btn" onclick="markAllAsRead()">全部已读</button>
+        </div>
+
+        <!-- 消息内容 -->
+        <div class="messages-container">
+          <!-- Tab 栏 -->
+          <div class="tabs">
+            <button class="tab active" data-type="all">全部</button>
+            <button class="tab" data-type="account">账户</button>
+            <button class="tab" data-type="notice">公告</button>
+            <button class="tab" data-type="usage">用量</button>
+          </div>
+
+          <!-- 消息列表 -->
+          <div class="message-list" id="message-list">
+            <!-- 消息卡片将通过 JS 动态生成 -->
+          </div>
+
+          <!-- 加载更多 -->
+          <div class="load-more">── 没有更多消息了 ──</div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- 消息详情 Modal -->
+  <div class="modal-overlay" id="modal-overlay" onclick="closeModal(event)">
+    <div class="modal" onclick="event.stopPropagation()">
+      <div class="modal-close" onclick="closeModal()">✕</div>
+      <div class="modal-header">
+        <span class="modal-icon" id="modal-icon">🔐</span>
+        <h2 class="modal-title" id="modal-title">消息标题</h2>
+      </div>
+      <div class="modal-time" id="modal-time">2024-02-02 14:30</div>
+      <div class="modal-divider"></div>
+      <div class="modal-content" id="modal-content">
+        消息内容...
+      </div>
+    </div>
+  </div>
+
+  <!-- 提示气泡 -->
+  <div class="tooltip" id="tooltip"></div>
+
+  <script>
+    // 模拟消息数据
+    const messages = [
+      {
+        id: 1,
+        title: '密码修改成功',
+        content: '您的账户密码已于 2024年2月2日 14:30 成功修改。\n\n如果这不是您本人的操作，请立即联系客服。\n\n安全提示：\n• 请勿将密码告知他人\n• 定期更换密码以保障账户安全\n• 避免在公共设备上保存密码',
+        msg_type: 'account',
+        is_read: false,
+        created_at: '2024-02-02T14:30:00Z',
+        time_display: '2小时前'
+      },
+      {
+        id: 2,
+        title: '邮箱验证成功',
+        content: '恭喜！您的邮箱 user@example.com 已成功验证。\n\n现在您可以使用完整的平台功能了。如有任何问题，请随时联系我们。',
+        msg_type: 'account',
+        is_read: false,
+        created_at: '2024-02-02T10:00:00Z',
+        time_display: '6小时前'
+      },
+      {
+        id: 3,
+        title: '系统维护通知',
+        content: '尊敬的用户：\n\n平台将于 2024年2月5日 凌晨 02:00-06:00 进行系统维护升级。\n\n维护期间，以下功能将暂时不可用：\n• AI 对话功能\n• 历史记录查询\n\n给您带来的不便，敬请谅解。\n\n维护完成后，我们将带来以下改进：\n• 更快的响应速度\n• 新增多模型支持\n• 优化的用户界面',
+        msg_type: 'notice',
+        is_read: false,
+        created_at: '2024-02-01T09:00:00Z',
+        time_display: '1天前'
+      },
+      {
+        id: 4,
+        title: '新功能上线：多模型支持',
+        content: '我们很高兴地宣布，GenNovel 现已支持多种 AI 模型！\n\n新增模型：\n• Claude 3 Opus - 适合复杂创作任务\n• Claude 3 Sonnet - 平衡性能与速度\n• Claude 3 Haiku - 快速响应场景\n\n您可以在对话设置中切换使用不同的模型。',
+        msg_type: 'notice',
+        is_read: true,
+        created_at: '2024-01-28T15:00:00Z',
+        time_display: '5天前'
+      },
+      {
+        id: 5,
+        title: '用量提醒：已使用 80%',
+        content: '您本月的 Token 用量已达到配额的 80%。\n\n当前用量：800,000 / 1,000,000 Tokens\n\n建议：\n• 合理规划剩余用量\n• 考虑升级套餐以获得更多配额\n\n如有疑问，请联系客服。',
+        msg_type: 'usage',
+        is_read: true,
+        created_at: '2024-01-25T12:00:00Z',
+        time_display: '8天前'
+      },
+      {
+        id: 6,
+        title: '欢迎加入 GenNovel',
+        content: '感谢您注册 GenNovel！\n\n作为新用户，您将获得：\n• 100,000 免费 Tokens\n• 7 天高级功能试用\n\n开始您的 AI 创作之旅吧！\n\n如需帮助，请查看帮助中心或联系客服。',
+        msg_type: 'account',
+        is_read: true,
+        created_at: '2024-01-20T08:00:00Z',
+        time_display: '2024-01-20'
+      }
+    ];
+
+    const MESSAGE_ICONS = {
+      account: '🔐',
+      notice: '📢',
+      usage: '📊'
+    };
+
+    // 当前筛选类型
+    let currentFilter = 'all';
+    let userMenuOpen = false;
+
+    // 渲染消息列表
+    function renderMessages() {
+      const container = document.getElementById('message-list');
+      const filteredMessages = currentFilter === 'all'
+        ? messages
+        : messages.filter(m => m.msg_type === currentFilter);
+
+      if (filteredMessages.length === 0) {
+        container.innerHTML = `
+          <div class="empty-state">
+            <div class="empty-icon">📭</div>
+            <div class="empty-text">${currentFilter === 'all' ? '暂无消息' : '暂无该类型的消息'}</div>
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = filteredMessages.map(msg => `
+        <div class="message-card ${msg.is_read ? '' : 'unread'}" onclick="openModal(${msg.id})">
+          <div class="message-icon">${MESSAGE_ICONS[msg.msg_type]}</div>
+          <div class="message-content">
+            <div class="message-header">
+              <div class="message-title">${msg.title}</div>
+              <div class="message-time">${msg.time_display}</div>
+            </div>
+            <div class="message-preview">${msg.content.substring(0, 80)}${msg.content.length > 80 ? '...' : ''}</div>
+          </div>
+          ${msg.is_read ? '' : '<div class="unread-dot"></div>'}
+        </div>
+      `).join('');
+    }
+
+    // 更新未读数量
+    function updateUnreadCount() {
+      const unreadCount = messages.filter(m => !m.is_read).length;
+      const headerBadge = document.getElementById('header-unread-badge');
+      const menuBadge = document.getElementById('menu-unread-badge');
+
+      if (unreadCount > 0) {
+        headerBadge.textContent = unreadCount;
+        headerBadge.style.display = 'flex';
+        menuBadge.textContent = unreadCount;
+        menuBadge.style.display = 'flex';
+      } else {
+        headerBadge.style.display = 'none';
+        menuBadge.style.display = 'none';
+      }
+
+      // 同时更新悬浮面板
+      renderNotificationDropdown();
+    }
+
+    // 渲染悬浮通知面板
+    function renderNotificationDropdown() {
+      const container = document.getElementById('notification-list');
+      // 只显示最近 5 条消息
+      const recentMessages = messages.slice(0, 5);
+
+      if (recentMessages.length === 0) {
+        container.innerHTML = `
+          <div class="notification-empty">
+            <div class="notification-empty-icon">📭</div>
+            <div class="notification-empty-text">暂无消息</div>
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = recentMessages.map(msg => `
+        <div class="notification-item ${msg.is_read ? '' : 'unread'}" onclick="event.stopPropagation(); openModalFromDropdown(${msg.id});">
+          <div class="notification-item-icon">${MESSAGE_ICONS[msg.msg_type]}</div>
+          <div class="notification-item-content">
+            <div class="notification-item-title">${msg.title}</div>
+            <div class="notification-item-preview">${msg.content.substring(0, 40)}${msg.content.length > 40 ? '...' : ''}</div>
+            <div class="notification-item-time">${msg.time_display}</div>
+          </div>
+          ${msg.is_read ? '' : '<div class="notification-item-dot"></div>'}
+        </div>
+      `).join('');
+    }
+
+    // 从悬浮面板打开消息详情
+    function openModalFromDropdown(id) {
+      openModal(id);
+    }
+
+    // Tab 切换
+    document.querySelectorAll('.tab').forEach(tab => {
+      tab.addEventListener('click', function() {
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        this.classList.add('active');
+        currentFilter = this.dataset.type;
+        renderMessages();
+      });
+    });
+
+    // 页面切换
+    function navigateTo(page) {
+      document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+      document.getElementById(page + '-page').classList.add('active');
+      closeUserMenu();
+    }
+
+    // 打开 Modal
+    function openModal(id) {
+      const msg = messages.find(m => m.id === id);
+      if (!msg) return;
+
+      // 标记为已读
+      msg.is_read = true;
+      renderMessages();
+      updateUnreadCount();
+
+      // 填充 Modal 内容
+      document.getElementById('modal-icon').textContent = MESSAGE_ICONS[msg.msg_type];
+      document.getElementById('modal-title').textContent = msg.title;
+      document.getElementById('modal-time').textContent = new Date(msg.created_at).toLocaleString('zh-CN');
+      document.getElementById('modal-content').textContent = msg.content;
+
+      // 显示 Modal
+      document.getElementById('modal-overlay').classList.add('show');
+      document.body.style.overflow = 'hidden';
+    }
+
+    // 关闭 Modal
+    function closeModal(event) {
+      if (event && event.target !== event.currentTarget) return;
+      document.getElementById('modal-overlay').classList.remove('show');
+      document.body.style.overflow = '';
+    }
+
+    // ESC 键关闭 Modal
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape') {
+        closeModal();
+        closeUserMenu();
+      }
+    });
+
+    // 全部标记已读
+    function markAllAsRead() {
+      messages.forEach(m => m.is_read = true);
+      renderMessages();
+      updateUnreadCount();
+      showTooltip('已全部标记为已读');
+    }
+
+    // 用户菜单切换
+    function toggleUserMenu() {
+      userMenuOpen = !userMenuOpen;
+      document.getElementById('user-menu').classList.toggle('show', userMenuOpen);
+    }
+
+    function closeUserMenu() {
+      userMenuOpen = false;
+      document.getElementById('user-menu').classList.remove('show');
+    }
+
+    // 点击其他地方关闭菜单
+    document.addEventListener('click', function(e) {
+      if (!e.target.closest('.sidebar-footer')) {
+        closeUserMenu();
+      }
+    });
+
+    // 主题切换
+    function toggleTheme() {
+      document.body.classList.toggle('light-theme');
+      const isLight = document.body.classList.contains('light-theme');
+
+      document.getElementById('theme-icon').textContent = isLight ? '🌙' : '☀️';
+      document.getElementById('menu-theme-icon').textContent = isLight ? '🌙' : '☀️';
+      document.getElementById('menu-theme-text').textContent = isLight ? '深色模式' : '浅色模式';
+    }
+
+    // 显示提示
+    function showTooltip(text) {
+      const tooltip = document.getElementById('tooltip');
+      tooltip.textContent = text;
+      tooltip.style.left = '50%';
+      tooltip.style.top = '50%';
+      tooltip.style.transform = 'translate(-50%, -50%)';
+      tooltip.classList.add('show');
+
+      setTimeout(() => {
+        tooltip.classList.remove('show');
+      }, 2000);
+    }
+
+    // 初始化
+    renderMessages();
+    updateUnreadCount();
+    renderNotificationDropdown();
+  </script>
+</body>
+</html>

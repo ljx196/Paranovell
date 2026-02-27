@@ -1,0 +1,994 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GenNovel Admin - UI Demo</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif; background: #f0f2f5; color: #333; font-size: 14px; }
+
+  /* ===== Layout ===== */
+  .app { display: flex; height: 100vh; }
+  .sidebar { width: 220px; background: #001529; color: #fff; flex-shrink: 0; display: flex; flex-direction: column; transition: width 0.2s; overflow: hidden; }
+  .sidebar-logo { height: 56px; display: flex; align-items: center; padding: 0 20px; border-bottom: 1px solid rgba(255,255,255,0.1); }
+  .sidebar-logo svg { width: 28px; height: 28px; margin-right: 10px; flex-shrink: 0; }
+  .sidebar-logo span { font-size: 16px; font-weight: 600; white-space: nowrap; color: #fff; }
+  .sidebar-menu { flex: 1; padding: 8px 0; overflow-y: auto; }
+  .menu-item { display: flex; align-items: center; padding: 10px 20px; cursor: pointer; color: rgba(255,255,255,0.65); transition: all 0.2s; white-space: nowrap; gap: 10px; font-size: 14px; border-left: 3px solid transparent; }
+  .menu-item:hover { color: #fff; background: rgba(255,255,255,0.05); }
+  .menu-item.active { color: #fff; background: #1677ff; border-left-color: #fff; }
+  .menu-item svg { width: 16px; height: 16px; flex-shrink: 0; }
+  .sidebar-footer { padding: 12px 20px; border-top: 1px solid rgba(255,255,255,0.1); }
+  .sidebar-user { display: flex; align-items: center; gap: 10px; }
+  .sidebar-avatar { width: 32px; height: 32px; border-radius: 50%; background: #1677ff; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 600; flex-shrink: 0; }
+  .sidebar-user-info { overflow: hidden; }
+  .sidebar-user-name { font-size: 13px; font-weight: 500; }
+  .sidebar-user-role { font-size: 11px; color: rgba(255,255,255,0.45); }
+
+  .main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+  .header { height: 56px; background: #fff; border-bottom: 1px solid #e8e8e8; display: flex; align-items: center; justify-content: space-between; padding: 0 24px; flex-shrink: 0; }
+  .header-left { display: flex; align-items: center; gap: 12px; }
+  .breadcrumb { color: #999; font-size: 13px; }
+  .breadcrumb span { color: #333; font-weight: 500; }
+  .header-right { display: flex; align-items: center; gap: 16px; }
+  .header-btn { padding: 4px 12px; border: 1px solid #d9d9d9; border-radius: 6px; background: #fff; cursor: pointer; font-size: 13px; color: #666; transition: all 0.2s; }
+  .header-btn:hover { color: #1677ff; border-color: #1677ff; }
+
+  .content { flex: 1; overflow-y: auto; padding: 24px; }
+
+  /* ===== Login Page ===== */
+  .login-page { display: flex; align-items: center; justify-content: center; height: 100vh; background: linear-gradient(135deg, #001529 0%, #003a70 100%); }
+  .login-card { width: 400px; background: #fff; border-radius: 12px; padding: 40px; box-shadow: 0 8px 40px rgba(0,0,0,0.3); }
+  .login-title { text-align: center; margin-bottom: 32px; }
+  .login-title h1 { font-size: 24px; color: #001529; margin-bottom: 4px; }
+  .login-title p { color: #999; font-size: 13px; }
+  .form-group { margin-bottom: 20px; }
+  .form-label { display: block; margin-bottom: 6px; font-size: 13px; color: #666; font-weight: 500; }
+  .form-input { width: 100%; padding: 10px 12px; border: 1px solid #d9d9d9; border-radius: 8px; font-size: 14px; outline: none; transition: border-color 0.2s; }
+  .form-input:focus { border-color: #1677ff; box-shadow: 0 0 0 2px rgba(22,119,255,0.1); }
+  .btn-primary { width: 100%; padding: 10px; background: #1677ff; color: #fff; border: none; border-radius: 8px; font-size: 15px; font-weight: 500; cursor: pointer; transition: background 0.2s; }
+  .btn-primary:hover { background: #4096ff; }
+
+  /* ===== Stats Cards ===== */
+  .stats-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 24px; }
+  .stat-card { background: #fff; border-radius: 10px; padding: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.06); }
+  .stat-card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+  .stat-card-title { font-size: 13px; color: #999; }
+  .stat-card-icon { width: 40px; height: 40px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 18px; }
+  .stat-card-value { font-size: 28px; font-weight: 700; color: #111; margin-bottom: 8px; }
+  .stat-card-change { font-size: 12px; display: flex; align-items: center; gap: 4px; }
+  .stat-card-change.up { color: #52c41a; }
+  .stat-card-change.down { color: #ff4d4f; }
+  .icon-users { background: rgba(22,119,255,0.1); color: #1677ff; }
+  .icon-active { background: rgba(82,196,26,0.1); color: #52c41a; }
+  .icon-new { background: rgba(250,173,20,0.1); color: #faad14; }
+  .icon-revenue { background: rgba(245,34,45,0.1); color: #f5222d; }
+
+  /* ===== Charts ===== */
+  .charts-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px; }
+  .chart-card { background: #fff; border-radius: 10px; padding: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.06); }
+  .chart-card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+  .chart-card-title { font-size: 15px; font-weight: 600; }
+  .chart-tabs { display: flex; gap: 4px; }
+  .chart-tab { padding: 3px 10px; border-radius: 4px; font-size: 12px; cursor: pointer; color: #999; background: #f5f5f5; border: none; }
+  .chart-tab.active { background: #1677ff; color: #fff; }
+  .chart-placeholder { height: 200px; border-radius: 8px; display: flex; align-items: flex-end; padding: 0 10px 10px; gap: 6px; position: relative; background: #fafafa; }
+  .chart-bar { flex: 1; border-radius: 4px 4px 0 0; transition: height 0.5s; min-width: 0; position: relative; }
+  .chart-bar.blue { background: linear-gradient(180deg, #1677ff, #69b1ff); }
+  .chart-bar.green { background: linear-gradient(180deg, #52c41a, #95de64); }
+  .chart-bar.orange { background: linear-gradient(180deg, #fa8c16, #ffc069); }
+  .chart-bar.purple { background: linear-gradient(180deg, #722ed1, #b37feb); }
+
+  /* ===== Recent Logs (dashboard) ===== */
+  .recent-logs { background: #fff; border-radius: 10px; padding: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.06); }
+  .log-item { display: flex; align-items: center; padding: 10px 0; border-bottom: 1px solid #f5f5f5; gap: 12px; }
+  .log-item:last-child { border-bottom: none; }
+  .log-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+  .log-dot.red { background: #ff4d4f; }
+  .log-dot.blue { background: #1677ff; }
+  .log-dot.green { background: #52c41a; }
+  .log-dot.orange { background: #fa8c16; }
+  .log-text { flex: 1; font-size: 13px; color: #555; }
+  .log-time { font-size: 12px; color: #bbb; white-space: nowrap; }
+
+  /* ===== Table ===== */
+  .page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+  .page-title { font-size: 20px; font-weight: 600; }
+  .filter-bar { display: flex; gap: 12px; margin-bottom: 16px; flex-wrap: wrap; align-items: center; }
+  .filter-select { padding: 7px 12px; border: 1px solid #d9d9d9; border-radius: 6px; font-size: 13px; outline: none; background: #fff; min-width: 120px; }
+  .filter-input { padding: 7px 12px; border: 1px solid #d9d9d9; border-radius: 6px; font-size: 13px; outline: none; min-width: 200px; }
+  .filter-input:focus, .filter-select:focus { border-color: #1677ff; }
+  .btn-search { padding: 7px 20px; background: #1677ff; color: #fff; border: none; border-radius: 6px; font-size: 13px; cursor: pointer; }
+  .btn-search:hover { background: #4096ff; }
+  .btn-action { padding: 7px 16px; border: 1px solid #1677ff; color: #1677ff; background: #fff; border-radius: 6px; font-size: 13px; cursor: pointer; transition: all 0.2s; }
+  .btn-action:hover { background: #1677ff; color: #fff; }
+  .btn-danger { padding: 5px 12px; border: 1px solid #ff4d4f; color: #ff4d4f; background: #fff; border-radius: 4px; font-size: 12px; cursor: pointer; }
+  .btn-danger:hover { background: #ff4d4f; color: #fff; }
+  .btn-sm { padding: 4px 10px; font-size: 12px; border-radius: 4px; cursor: pointer; border: 1px solid #d9d9d9; background: #fff; color: #555; transition: all 0.2s; }
+  .btn-sm:hover { color: #1677ff; border-color: #1677ff; }
+
+  .table-card { background: #fff; border-radius: 10px; box-shadow: 0 1px 3px rgba(0,0,0,0.06); overflow: hidden; }
+  table { width: 100%; border-collapse: collapse; }
+  th { background: #fafafa; padding: 12px 16px; text-align: left; font-size: 13px; color: #888; font-weight: 500; border-bottom: 1px solid #f0f0f0; white-space: nowrap; }
+  td { padding: 12px 16px; border-bottom: 1px solid #f5f5f5; font-size: 13px; }
+  tr:hover td { background: #fafafa; }
+  .table-footer { display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; }
+  .table-total { font-size: 13px; color: #999; }
+  .pagination { display: flex; gap: 4px; }
+  .page-btn { width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border: 1px solid #d9d9d9; border-radius: 6px; font-size: 13px; cursor: pointer; background: #fff; }
+  .page-btn.active { background: #1677ff; color: #fff; border-color: #1677ff; }
+  .page-btn:hover:not(.active) { border-color: #1677ff; color: #1677ff; }
+
+  /* ===== Status Badges ===== */
+  .badge { padding: 2px 10px; border-radius: 10px; font-size: 12px; font-weight: 500; display: inline-block; }
+  .badge-success { background: #f6ffed; color: #52c41a; border: 1px solid #b7eb8f; }
+  .badge-danger { background: #fff2f0; color: #ff4d4f; border: 1px solid #ffccc7; }
+  .badge-warning { background: #fffbe6; color: #faad14; border: 1px solid #ffe58f; }
+  .badge-info { background: #e6f4ff; color: #1677ff; border: 1px solid #91caff; }
+  .badge-purple { background: #f9f0ff; color: #722ed1; border: 1px solid #d3adf7; }
+
+  /* ===== Detail Page ===== */
+  .detail-back { display: flex; align-items: center; gap: 8px; font-size: 13px; color: #1677ff; cursor: pointer; margin-bottom: 20px; }
+  .detail-back:hover { text-decoration: underline; }
+  .detail-section { background: #fff; border-radius: 10px; padding: 20px; margin-bottom: 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.06); }
+  .detail-section-title { font-size: 15px; font-weight: 600; margin-bottom: 16px; padding-bottom: 12px; border-bottom: 1px solid #f0f0f0; }
+  .detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px 32px; }
+  .detail-item { display: flex; align-items: center; gap: 8px; }
+  .detail-label { font-size: 13px; color: #999; min-width: 80px; }
+  .detail-value { font-size: 13px; color: #333; font-weight: 500; }
+  .balance-big { font-size: 32px; font-weight: 700; color: #1677ff; }
+  .balance-stats { display: flex; gap: 32px; margin-top: 12px; }
+  .balance-stat-label { font-size: 12px; color: #999; }
+  .balance-stat-value { font-size: 18px; font-weight: 600; margin-top: 4px; }
+  .action-btns { display: flex; gap: 12px; margin-top: 8px; }
+
+  /* ===== Modal ===== */
+  .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.45); display: flex; align-items: center; justify-content: center; z-index: 1000; }
+  .modal-overlay.hidden { display: none; }
+  .modal { background: #fff; border-radius: 12px; width: 520px; max-height: 80vh; overflow-y: auto; box-shadow: 0 12px 48px rgba(0,0,0,0.2); }
+  .modal-header { display: flex; justify-content: space-between; align-items: center; padding: 16px 24px; border-bottom: 1px solid #f0f0f0; }
+  .modal-title { font-size: 16px; font-weight: 600; }
+  .modal-close { width: 32px; height: 32px; border: none; background: none; font-size: 18px; cursor: pointer; color: #999; border-radius: 6px; display: flex; align-items: center; justify-content: center; }
+  .modal-close:hover { background: #f5f5f5; color: #333; }
+  .modal-body { padding: 24px; }
+  .modal-footer { display: flex; justify-content: flex-end; gap: 12px; padding: 16px 24px; border-top: 1px solid #f0f0f0; }
+  .btn-cancel { padding: 8px 20px; border: 1px solid #d9d9d9; border-radius: 6px; background: #fff; font-size: 14px; cursor: pointer; }
+  .btn-cancel:hover { border-color: #1677ff; color: #1677ff; }
+  .btn-confirm { padding: 8px 20px; border: none; border-radius: 6px; background: #1677ff; color: #fff; font-size: 14px; cursor: pointer; }
+  .btn-confirm:hover { background: #4096ff; }
+  .btn-confirm-danger { padding: 8px 20px; border: none; border-radius: 6px; background: #ff4d4f; color: #fff; font-size: 14px; cursor: pointer; }
+  .btn-confirm-danger:hover { background: #ff7875; }
+  .radio-group { display: flex; gap: 24px; margin-bottom: 4px; }
+  .radio-item { display: flex; align-items: center; gap: 6px; cursor: pointer; font-size: 14px; }
+  .radio-dot { width: 16px; height: 16px; border: 2px solid #d9d9d9; border-radius: 50%; position: relative; }
+  .radio-item.active .radio-dot { border-color: #1677ff; }
+  .radio-item.active .radio-dot::after { content: ''; position: absolute; top: 3px; left: 3px; width: 6px; height: 6px; border-radius: 50%; background: #1677ff; }
+  .textarea { width: 100%; min-height: 100px; padding: 10px 12px; border: 1px solid #d9d9d9; border-radius: 8px; font-size: 14px; outline: none; resize: vertical; font-family: inherit; }
+  .textarea:focus { border-color: #1677ff; }
+
+  /* ===== Config Page ===== */
+  .config-section { background: #fff; border-radius: 10px; padding: 24px; margin-bottom: 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.06); }
+  .config-section-title { font-size: 15px; font-weight: 600; margin-bottom: 20px; color: #111; display: flex; align-items: center; gap: 8px; }
+  .config-section-title::before { content: ''; width: 3px; height: 16px; background: #1677ff; border-radius: 2px; }
+  .config-row { display: flex; align-items: center; margin-bottom: 16px; }
+  .config-row:last-child { margin-bottom: 0; }
+  .config-label { width: 140px; font-size: 13px; color: #666; flex-shrink: 0; }
+  .config-control { flex: 1; }
+  .config-input { padding: 7px 12px; border: 1px solid #d9d9d9; border-radius: 6px; font-size: 14px; width: 200px; outline: none; }
+  .config-input:focus { border-color: #1677ff; }
+  .config-unit { margin-left: 8px; font-size: 13px; color: #999; }
+  .switch { position: relative; width: 44px; height: 22px; background: #ccc; border-radius: 11px; cursor: pointer; transition: background 0.2s; }
+  .switch.on { background: #1677ff; }
+  .switch::after { content: ''; position: absolute; top: 2px; left: 2px; width: 18px; height: 18px; background: #fff; border-radius: 50%; transition: transform 0.2s; box-shadow: 0 1px 3px rgba(0,0,0,0.2); }
+  .switch.on::after { transform: translateX(22px); }
+  .preset-tags { display: flex; gap: 8px; flex-wrap: wrap; }
+  .preset-tag { padding: 6px 16px; border: 1px solid #d9d9d9; border-radius: 6px; font-size: 13px; background: #fafafa; }
+
+  /* ===== Log Detail ===== */
+  .log-detail-card { background: #f6f8fa; border-radius: 8px; padding: 16px; font-family: 'Courier New', monospace; font-size: 13px; line-height: 1.8; white-space: pre-wrap; color: #555; }
+
+  /* ===== Order Summary ===== */
+  .summary-bar { display: flex; gap: 24px; padding: 12px 16px; background: #fafafa; border-bottom: 1px solid #f0f0f0; font-size: 13px; color: #666; }
+  .summary-item { display: flex; gap: 4px; }
+  .summary-value { font-weight: 600; color: #333; }
+
+  /* ===== Helpers ===== */
+  .text-success { color: #52c41a; }
+  .text-danger { color: #ff4d4f; }
+  .text-warning { color: #faad14; }
+  .text-info { color: #1677ff; }
+  .text-purple { color: #722ed1; }
+  .text-muted { color: #999; }
+  .font-mono { font-family: 'Courier New', monospace; }
+  .hidden { display: none !important; }
+  .mt-16 { margin-top: 16px; }
+  .mb-8 { margin-bottom: 8px; }
+
+  /* ===== Scrollbar ===== */
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: #d9d9d9; border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: #bbb; }
+</style>
+</head>
+<body>
+
+<!-- ==================== LOGIN PAGE ==================== -->
+<div id="page-login" class="login-page">
+  <div class="login-card">
+    <div class="login-title">
+      <h1>GenNovel Admin</h1>
+      <p>管理后台登录</p>
+    </div>
+    <div class="form-group">
+      <label class="form-label">邮箱</label>
+      <input class="form-input" type="email" placeholder="admin@gennovel.com" value="admin@gennovel.com">
+    </div>
+    <div class="form-group">
+      <label class="form-label">密码</label>
+      <input class="form-input" type="password" placeholder="请输入密码" value="••••••••">
+    </div>
+    <button class="btn-primary" onclick="showApp()">登 录</button>
+  </div>
+</div>
+
+<!-- ==================== MAIN APP ==================== -->
+<div id="app" class="app hidden">
+  <!-- Sidebar -->
+  <div class="sidebar">
+    <div class="sidebar-logo">
+      <svg viewBox="0 0 28 28" fill="none"><rect width="28" height="28" rx="6" fill="#1677ff"/><path d="M8 8h12v3H8zm0 5h8v3H8zm0 5h10v3H8z" fill="#fff" opacity="0.9"/></svg>
+      <span>GenNovel Admin</span>
+    </div>
+    <div class="sidebar-menu">
+      <div class="menu-item active" onclick="navigate('dashboard')">
+        <svg viewBox="0 0 16 16" fill="currentColor"><path d="M1 1h6v6H1zm8 0h6v6H9zM1 9h6v6H1zm8 0h6v6H9z"/></svg>
+        仪表盘
+      </div>
+      <div class="menu-item" onclick="navigate('users')">
+        <svg viewBox="0 0 16 16" fill="currentColor"><path d="M8 8a3.5 3.5 0 100-7 3.5 3.5 0 000 7zm0 1c-3.87 0-7 2.24-7 5v1h14v-1c0-2.76-3.13-5-7-5z"/></svg>
+        用户管理
+      </div>
+      <div class="menu-item" onclick="navigate('orders')">
+        <svg viewBox="0 0 16 16" fill="currentColor"><path d="M2 1h12a1 1 0 011 1v12a1 1 0 01-1 1H2a1 1 0 01-1-1V2a1 1 0 011-1zm1 3v2h10V4zm0 4v2h7V8zm0 4v1h5v-1z"/></svg>
+        订单管理
+      </div>
+      <div class="menu-item" onclick="navigate('transactions')">
+        <svg viewBox="0 0 16 16" fill="currentColor"><path d="M2 2h12v2H2zm0 4h12v2H2zm0 4h12v2H2zm0 4h8v2H2z"/></svg>
+        交易流水
+      </div>
+      <div class="menu-item" onclick="navigate('announcements')">
+        <svg viewBox="0 0 16 16" fill="currentColor"><path d="M13 2L3 6v4l10 4V2zM2 6.5v3a.5.5 0 00.5.5H3l1 3h1l-1-3h.5L13 6 4.5 2H2.5a.5.5 0 00-.5.5v4z"/></svg>
+        公告管理
+      </div>
+      <div class="menu-item" onclick="navigate('configs')">
+        <svg viewBox="0 0 16 16" fill="currentColor"><path d="M8 10a2 2 0 100-4 2 2 0 000 4zm6.32-1.9l1.52 1.19a.38.38 0 01.09.49l-1.44 2.49a.38.38 0 01-.46.17l-1.8-.72a5.9 5.9 0 01-1.1.64l-.27 1.91a.37.37 0 01-.37.32H7.61a.37.37 0 01-.37-.32l-.27-1.91a5.5 5.5 0 01-1.1-.64l-1.8.72a.37.37 0 01-.46-.17L2.17 9.78a.38.38 0 01.09-.49l1.52-1.19a5.6 5.6 0 010-1.28L2.26 5.63a.38.38 0 01-.09-.49l1.44-2.49a.38.38 0 01.46-.17l1.8.72a5.9 5.9 0 011.1-.64l.27-1.91A.37.37 0 017.61.33h2.88c.18 0 .34.13.37.32l.27 1.91c.4.16.77.38 1.1.64l1.8-.72c.17-.07.37 0 .46.17l1.44 2.49a.38.38 0 01-.09.49l-1.52 1.19c.05.42.05.86 0 1.28z"/></svg>
+        系统配置
+      </div>
+      <div class="menu-item" onclick="navigate('audit-logs')">
+        <svg viewBox="0 0 16 16" fill="currentColor"><path d="M3 1h10a1 1 0 011 1v12a1 1 0 01-1 1H3a1 1 0 01-1-1V2a1 1 0 011-1zm1 3v1h8V4zm0 3v1h8V7zm0 3v1h5v-1z"/></svg>
+        操作日志
+      </div>
+    </div>
+    <div class="sidebar-footer">
+      <div class="sidebar-user">
+        <div class="sidebar-avatar">A</div>
+        <div class="sidebar-user-info">
+          <div class="sidebar-user-name">Admin</div>
+          <div class="sidebar-user-role">管理员</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Content -->
+  <div class="main">
+    <div class="header">
+      <div class="header-left">
+        <div class="breadcrumb" id="breadcrumb">管理后台 / <span>仪表盘</span></div>
+      </div>
+      <div class="header-right">
+        <div class="header-btn" onclick="showLogin()">退出登录</div>
+      </div>
+    </div>
+    <div class="content" id="content">
+      <!-- Dynamic content loaded here -->
+    </div>
+  </div>
+</div>
+
+<!-- ==================== Modals ==================== -->
+<div id="modal-adjust" class="modal-overlay hidden" onclick="if(event.target===this)closeModal('modal-adjust')">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">手动调账</div>
+      <button class="modal-close" onclick="closeModal('modal-adjust')">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label class="form-label">调账类型</label>
+        <div class="radio-group">
+          <div class="radio-item active"><div class="radio-dot"></div> 增加积分</div>
+          <div class="radio-item"><div class="radio-dot"></div> 扣除积分</div>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">积分数量</label>
+        <input class="form-input" type="number" placeholder="请输入点数" value="500">
+      </div>
+      <div class="form-group">
+        <label class="form-label">原因（必填）</label>
+        <textarea class="textarea" placeholder="请输入调账原因">客服补偿</textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="closeModal('modal-adjust')">取消</button>
+      <button class="btn-confirm" onclick="closeModal('modal-adjust')">确认调账</button>
+    </div>
+  </div>
+</div>
+
+<div id="modal-ban" class="modal-overlay hidden" onclick="if(event.target===this)closeModal('modal-ban')">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">确认封禁用户</div>
+      <button class="modal-close" onclick="closeModal('modal-ban')">&times;</button>
+    </div>
+    <div class="modal-body">
+      <p style="margin-bottom:16px; color:#666;">封禁后该用户将无法登录和使用平台服务。</p>
+      <div class="form-group">
+        <label class="form-label">封禁原因（必填）</label>
+        <textarea class="textarea" placeholder="请输入封禁原因"></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="closeModal('modal-ban')">取消</button>
+      <button class="btn-confirm-danger" onclick="closeModal('modal-ban')">确认封禁</button>
+    </div>
+  </div>
+</div>
+
+<div id="modal-announce" class="modal-overlay hidden" onclick="if(event.target===this)closeModal('modal-announce')">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">发送系统公告</div>
+      <button class="modal-close" onclick="closeModal('modal-announce')">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label class="form-label">消息类型</label>
+        <div class="radio-group">
+          <div class="radio-item active"><div class="radio-dot"></div> 系统公告</div>
+          <div class="radio-item"><div class="radio-dot"></div> 账户通知</div>
+          <div class="radio-item"><div class="radio-dot"></div> 用量提醒</div>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">发送对象</label>
+        <div class="radio-group">
+          <div class="radio-item active"><div class="radio-dot"></div> 全部用户</div>
+          <div class="radio-item"><div class="radio-dot"></div> 指定用户</div>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">标题</label>
+        <input class="form-input" placeholder="请输入公告标题">
+      </div>
+      <div class="form-group">
+        <label class="form-label">内容</label>
+        <textarea class="textarea" placeholder="请输入公告内容" style="min-height:120px;"></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="closeModal('modal-announce')">取消</button>
+      <button class="btn-confirm" onclick="closeModal('modal-announce')">确认发送</button>
+    </div>
+  </div>
+</div>
+
+<div id="modal-reset-pwd" class="modal-overlay hidden" onclick="if(event.target===this)closeModal('modal-reset-pwd')">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">确认重置密码</div>
+      <button class="modal-close" onclick="closeModal('modal-reset-pwd')">&times;</button>
+    </div>
+    <div class="modal-body">
+      <p style="color:#666;">将为用户 <b>horizon@gmail.com</b> 生成随机密码并通过邮件发送。</p>
+      <p style="color:#999; font-size:12px; margin-top:8px;">用户的当前密码将立即失效。</p>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="closeModal('modal-reset-pwd')">取消</button>
+      <button class="btn-confirm" onclick="closeModal('modal-reset-pwd')">确认重置</button>
+    </div>
+  </div>
+</div>
+
+<div id="modal-log-detail" class="modal-overlay hidden" onclick="if(event.target===this)closeModal('modal-log-detail')">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">操作日志详情</div>
+      <button class="modal-close" onclick="closeModal('modal-log-detail')">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="detail-grid" style="margin-bottom:16px;">
+        <div class="detail-item"><span class="detail-label">操作人</span><span class="detail-value">admin@gennovel.com</span></div>
+        <div class="detail-item"><span class="detail-label">操作时间</span><span class="detail-value">2026-02-07 09:15:30</span></div>
+        <div class="detail-item"><span class="detail-label">操作类型</span><span class="detail-value">手动调账</span></div>
+        <div class="detail-item"><span class="detail-label">IP 地址</span><span class="detail-value font-mono">192.168.1.100</span></div>
+        <div class="detail-item"><span class="detail-label">操作对象</span><span class="detail-value">user#2 (horizon@gmail.com)</span></div>
+      </div>
+      <label class="form-label">操作详情</label>
+      <div class="log-detail-card">{
+  "type": "increase",
+  "amount": 500,
+  "reason": "客服补偿",
+  "balance_before": 12000,
+  "balance_after": 12500
+}</div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="closeModal('modal-log-detail')">关闭</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ===== Page templates =====
+const pages = {};
+
+pages.dashboard = `
+<div class="stats-row">
+  <div class="stat-card">
+    <div class="stat-card-header">
+      <span class="stat-card-title">总用户数</span>
+      <div class="stat-card-icon icon-users">👥</div>
+    </div>
+    <div class="stat-card-value">1,234</div>
+    <div class="stat-card-change up">↑ 12.5% 较昨日</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-card-header">
+      <span class="stat-card-title">今日活跃</span>
+      <div class="stat-card-icon icon-active">⚡</div>
+    </div>
+    <div class="stat-card-value">328</div>
+    <div class="stat-card-change up">↑ 5.1% 较昨日</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-card-header">
+      <span class="stat-card-title">今日新增</span>
+      <div class="stat-card-icon icon-new">🆕</div>
+    </div>
+    <div class="stat-card-value">15</div>
+    <div class="stat-card-change down">↓ 3.2% 较昨日</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-card-header">
+      <span class="stat-card-title">今日收入</span>
+      <div class="stat-card-icon icon-revenue">💰</div>
+    </div>
+    <div class="stat-card-value">¥2,580</div>
+    <div class="stat-card-change up">↑ 18.3% 较昨日</div>
+  </div>
+</div>
+
+<div class="charts-row">
+  <div class="chart-card">
+    <div class="chart-card-header">
+      <span class="chart-card-title">用户增长趋势</span>
+      <div class="chart-tabs">
+        <button class="chart-tab">7天</button>
+        <button class="chart-tab active">30天</button>
+        <button class="chart-tab">90天</button>
+      </div>
+    </div>
+    <div class="chart-placeholder">
+      ${generateBars(20, 'blue')}
+    </div>
+  </div>
+  <div class="chart-card">
+    <div class="chart-card-header">
+      <span class="chart-card-title">收入趋势</span>
+      <div class="chart-tabs">
+        <button class="chart-tab">7天</button>
+        <button class="chart-tab active">30天</button>
+        <button class="chart-tab">90天</button>
+      </div>
+    </div>
+    <div class="chart-placeholder">
+      ${generateBars(20, 'green')}
+    </div>
+  </div>
+</div>
+
+<div class="charts-row">
+  <div class="chart-card">
+    <div class="chart-card-header">
+      <span class="chart-card-title">Token 消耗趋势</span>
+      <div class="chart-tabs">
+        <button class="chart-tab">7天</button>
+        <button class="chart-tab active">30天</button>
+        <button class="chart-tab">90天</button>
+      </div>
+    </div>
+    <div class="chart-placeholder">
+      ${generateBars(20, 'orange')}
+    </div>
+  </div>
+  <div class="recent-logs">
+    <div class="chart-card-header">
+      <span class="chart-card-title">最近操作</span>
+      <button class="btn-sm" onclick="navigate('audit-logs')">查看全部</button>
+    </div>
+    <div class="log-item"><div class="log-dot red"></div><div class="log-text">封禁用户 carol@example.com — 违规操作</div><div class="log-time">10:32</div></div>
+    <div class="log-item"><div class="log-dot blue"></div><div class="log-text">调账 +500 给 horizon@gmail.com — 客服补偿</div><div class="log-time">09:15</div></div>
+    <div class="log-item"><div class="log-dot green"></div><div class="log-text">发送公告「系统维护通知」— 全部用户</div><div class="log-time">08:00</div></div>
+    <div class="log-item"><div class="log-dot orange"></div><div class="log-text">修改配置 新用户赠送积分 1000 → 2000</div><div class="log-time">昨天 17:00</div></div>
+    <div class="log-item"><div class="log-dot blue"></div><div class="log-text">解封用户 dave@example.com</div><div class="log-time">昨天 14:20</div></div>
+  </div>
+</div>
+`;
+
+pages.users = `
+<div class="page-header">
+  <div class="page-title">用户管理</div>
+</div>
+<div class="filter-bar">
+  <input class="filter-input" placeholder="搜索邮箱或昵称...">
+  <select class="filter-select">
+    <option>全部状态</option>
+    <option>正常</option>
+    <option>封禁</option>
+  </select>
+  <select class="filter-select">
+    <option>注册时间</option>
+    <option>最近7天</option>
+    <option>最近30天</option>
+    <option>最近90天</option>
+  </select>
+  <button class="btn-search">搜索</button>
+</div>
+<div class="table-card">
+  <table>
+    <thead>
+      <tr><th>ID</th><th>邮箱</th><th>昵称</th><th>余额(点)</th><th>状态</th><th>注册时间</th><th>最后活跃</th><th>操作</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>1</td><td>admin@gennovel.com</td><td>Admin</td><td>99,999</td><td><span class="badge badge-info">管理员</span></td><td>2026-01-15</td><td>2026-02-07</td><td><button class="btn-sm" onclick="navigate('user-detail')">详情</button></td></tr>
+      <tr><td>2</td><td>horizon@gmail.com</td><td>Horizon</td><td>12,500</td><td><span class="badge badge-success">正常</span></td><td>2026-02-01</td><td>2026-02-07</td><td><button class="btn-sm" onclick="navigate('user-detail')">详情</button></td></tr>
+      <tr><td>3</td><td>alice@example.com</td><td>Alice</td><td>8,300</td><td><span class="badge badge-success">正常</span></td><td>2026-02-01</td><td>2026-02-06</td><td><button class="btn-sm" onclick="navigate('user-detail')">详情</button></td></tr>
+      <tr><td>4</td><td>bob@example.com</td><td>Bob</td><td>450</td><td><span class="badge badge-success">正常</span></td><td>2026-02-02</td><td>2026-02-07</td><td><button class="btn-sm" onclick="navigate('user-detail')">详情</button></td></tr>
+      <tr><td>5</td><td>carol@example.com</td><td>Carol</td><td>0</td><td><span class="badge badge-danger">封禁</span></td><td>2026-02-03</td><td>2026-02-05</td><td><button class="btn-sm" onclick="navigate('user-detail')">详情</button></td></tr>
+      <tr><td>6</td><td>dave@example.com</td><td>Dave</td><td>3,200</td><td><span class="badge badge-success">正常</span></td><td>2026-02-03</td><td>2026-02-07</td><td><button class="btn-sm" onclick="navigate('user-detail')">详情</button></td></tr>
+      <tr><td>7</td><td>eve@example.com</td><td>Eve</td><td>15,600</td><td><span class="badge badge-success">正常</span></td><td>2026-02-04</td><td>2026-02-07</td><td><button class="btn-sm" onclick="navigate('user-detail')">详情</button></td></tr>
+      <tr><td>8</td><td>frank@example.com</td><td>Frank</td><td>900</td><td><span class="badge badge-success">正常</span></td><td>2026-02-04</td><td>2026-02-06</td><td><button class="btn-sm" onclick="navigate('user-detail')">详情</button></td></tr>
+      <tr><td>9</td><td>grace@example.com</td><td>Grace</td><td>6,700</td><td><span class="badge badge-success">正常</span></td><td>2026-02-05</td><td>2026-02-07</td><td><button class="btn-sm" onclick="navigate('user-detail')">详情</button></td></tr>
+      <tr><td>10</td><td>henry@example.com</td><td>Henry</td><td>2,100</td><td><span class="badge badge-success">正常</span></td><td>2026-02-06</td><td>2026-02-07</td><td><button class="btn-sm" onclick="navigate('user-detail')">详情</button></td></tr>
+    </tbody>
+  </table>
+  <div class="table-footer">
+    <div class="table-total">共 1,234 条</div>
+    <div class="pagination">
+      <button class="page-btn">&lt;</button>
+      <button class="page-btn active">1</button>
+      <button class="page-btn">2</button>
+      <button class="page-btn">3</button>
+      <button class="page-btn">...</button>
+      <button class="page-btn">62</button>
+      <button class="page-btn">&gt;</button>
+    </div>
+  </div>
+</div>
+`;
+
+pages['user-detail'] = `
+<div class="detail-back" onclick="navigate('users')">← 返回用户列表</div>
+<div class="page-header"><div class="page-title">用户详情 #2</div></div>
+
+<div class="detail-section">
+  <div class="detail-section-title">基本信息</div>
+  <div class="detail-grid">
+    <div class="detail-item"><span class="detail-label">邮箱</span><span class="detail-value">horizon@gmail.com</span></div>
+    <div class="detail-item"><span class="detail-label">状态</span><span class="badge badge-success">正常</span></div>
+    <div class="detail-item"><span class="detail-label">昵称</span><span class="detail-value">Horizon</span></div>
+    <div class="detail-item"><span class="detail-label">角色</span><span class="detail-value">user</span></div>
+    <div class="detail-item"><span class="detail-label">邀请码</span><span class="detail-value font-mono">HRZ2026</span></div>
+    <div class="detail-item"><span class="detail-label">注册时间</span><span class="detail-value">2026-02-01 08:00</span></div>
+    <div class="detail-item"><span class="detail-label">邮箱验证</span><span class="detail-value text-success">✓ 已验证</span></div>
+    <div class="detail-item"><span class="detail-label">最后活跃</span><span class="detail-value">2026-02-07 14:30</span></div>
+  </div>
+</div>
+
+<div class="detail-section">
+  <div class="detail-section-title">账户余额</div>
+  <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+    <div>
+      <div class="balance-big">12,500 <span style="font-size:16px;font-weight:400;color:#999;">点</span></div>
+      <div class="balance-stats">
+        <div><div class="balance-stat-label">累计充值</div><div class="balance-stat-value text-success">50,000</div></div>
+        <div><div class="balance-stat-label">累计消费</div><div class="balance-stat-value text-danger">36,200</div></div>
+        <div><div class="balance-stat-label">累计赠送</div><div class="balance-stat-value text-purple">1,200</div></div>
+      </div>
+    </div>
+    <button class="btn-action" onclick="openModal('modal-adjust')">调账</button>
+  </div>
+</div>
+
+<div class="detail-section">
+  <div class="detail-section-title">最近交易</div>
+  <table>
+    <thead><tr><th>类型</th><th>金额</th><th>余额(后)</th><th>描述</th><th>时间</th></tr></thead>
+    <tbody>
+      <tr><td><span class="badge badge-success">充值</span></td><td class="text-success font-mono">+5,000</td><td>12,500</td><td>支付宝 · ¥50.00</td><td>02-06 14:30</td></tr>
+      <tr><td><span class="badge badge-danger">消费</span></td><td class="text-danger font-mono">-320</td><td>7,500</td><td>武侠小说创作 · 标准模型</td><td>02-06 13:22</td></tr>
+      <tr><td><span class="badge badge-danger">消费</span></td><td class="text-danger font-mono">-180</td><td>7,820</td><td>科幻故事大纲 · 标准模型</td><td>02-06 11:05</td></tr>
+      <tr><td><span class="badge badge-warning">邀请奖励</span></td><td class="text-success font-mono">+500</td><td>8,000</td><td>邀请 user@xx.com</td><td>02-05 09:30</td></tr>
+      <tr><td><span class="badge badge-purple">赠送</span></td><td class="text-purple font-mono">+1,000</td><td>7,500</td><td>注册赠送</td><td>02-01 08:00</td></tr>
+    </tbody>
+  </table>
+  <div style="text-align:center;padding:12px;">
+    <button class="btn-sm" onclick="navigate('transactions')">查看全部交易 →</button>
+  </div>
+</div>
+
+<div class="detail-section">
+  <div class="detail-section-title">操作</div>
+  <div class="action-btns">
+    <button class="btn-confirm" onclick="openModal('modal-reset-pwd')">重置密码</button>
+    <button class="btn-confirm-danger" onclick="openModal('modal-ban')">封禁用户</button>
+  </div>
+</div>
+`;
+
+pages.orders = `
+<div class="page-header">
+  <div class="page-title">订单管理</div>
+</div>
+<div class="filter-bar">
+  <select class="filter-select">
+    <option>全部状态</option>
+    <option>待支付</option>
+    <option>已支付</option>
+    <option>已取消</option>
+    <option>已退款</option>
+  </select>
+  <select class="filter-select">
+    <option>全部支付方式</option>
+    <option>支付宝</option>
+    <option>微信支付</option>
+  </select>
+  <select class="filter-select">
+    <option>时间范围</option>
+    <option>最近7天</option>
+    <option>最近30天</option>
+    <option>最近90天</option>
+  </select>
+  <input class="filter-input" placeholder="用户邮箱..." style="min-width:160px;">
+  <button class="btn-search">搜索</button>
+</div>
+<div class="table-card">
+  <div class="summary-bar">
+    <div class="summary-item">总计 <span class="summary-value">856</span> 单</div>
+    <div class="summary-item">已支付 <span class="summary-value text-success">¥128,500</span></div>
+    <div class="summary-item">待支付 <span class="summary-value text-warning">¥3,200</span></div>
+    <div class="summary-item">已取消 <span class="summary-value text-muted">¥15,800</span></div>
+    <div class="summary-item">已退款 <span class="summary-value text-danger">¥1,200</span></div>
+  </div>
+  <table>
+    <thead><tr><th>订单号</th><th>用户</th><th>金额</th><th>点数</th><th>支付方式</th><th>状态</th><th>创建时间</th><th>支付时间</th></tr></thead>
+    <tbody>
+      <tr><td class="font-mono">R20260207001</td><td>eve@example.com</td><td>¥100.00</td><td>10,000</td><td>支付宝</td><td><span class="badge badge-success">已支付</span></td><td>02-07 10:15</td><td>02-07 10:16</td></tr>
+      <tr><td class="font-mono">R20260207002</td><td>bob@example.com</td><td>¥50.00</td><td>5,000</td><td>微信支付</td><td><span class="badge badge-warning">待支付</span></td><td>02-07 09:30</td><td>—</td></tr>
+      <tr><td class="font-mono">R20260206001</td><td>horizon@gmail.com</td><td>¥50.00</td><td>5,000</td><td>支付宝</td><td><span class="badge badge-success">已支付</span></td><td>02-06 14:28</td><td>02-06 14:30</td></tr>
+      <tr><td class="font-mono">R20260206002</td><td>alice@example.com</td><td>¥10.00</td><td>1,000</td><td>微信支付</td><td><span class="badge badge-success">已支付</span></td><td>02-06 11:20</td><td>02-06 11:21</td></tr>
+      <tr><td class="font-mono">R20260206003</td><td>dave@example.com</td><td>¥500.00</td><td>50,000</td><td>支付宝</td><td><span class="badge badge-success">已支付</span></td><td>02-06 09:15</td><td>02-06 09:17</td></tr>
+      <tr><td class="font-mono">R20260205001</td><td>carol@example.com</td><td>¥10.00</td><td>1,000</td><td>支付宝</td><td><span class="badge badge-danger">已取消</span></td><td>02-05 16:00</td><td>—</td></tr>
+      <tr><td class="font-mono">R20260205002</td><td>frank@example.com</td><td>¥100.00</td><td>10,000</td><td>微信支付</td><td><span class="badge badge-success">已支付</span></td><td>02-05 14:30</td><td>02-05 14:32</td></tr>
+      <tr><td class="font-mono">R20260205003</td><td>grace@example.com</td><td>¥50.00</td><td>5,000</td><td>支付宝</td><td><span class="badge badge-info">已退款</span></td><td>02-05 10:00</td><td>02-05 10:01</td></tr>
+      <tr><td class="font-mono">R20260204001</td><td>henry@example.com</td><td>¥10.00</td><td>1,000</td><td>微信支付</td><td><span class="badge badge-success">已支付</span></td><td>02-04 18:45</td><td>02-04 18:46</td></tr>
+      <tr><td class="font-mono">R20260204002</td><td>bob@example.com</td><td>¥50.00</td><td>5,000</td><td>支付宝</td><td><span class="badge badge-danger">已取消</span></td><td>02-04 12:30</td><td>—</td></tr>
+    </tbody>
+  </table>
+  <div class="table-footer">
+    <div class="table-total">共 856 条</div>
+    <div class="pagination">
+      <button class="page-btn">&lt;</button>
+      <button class="page-btn active">1</button>
+      <button class="page-btn">2</button>
+      <button class="page-btn">3</button>
+      <button class="page-btn">...</button>
+      <button class="page-btn">43</button>
+      <button class="page-btn">&gt;</button>
+    </div>
+  </div>
+</div>
+`;
+
+pages.transactions = `
+<div class="page-header">
+  <div class="page-title">交易流水</div>
+</div>
+<div class="filter-bar">
+  <select class="filter-select">
+    <option>全部类型</option>
+    <option>充值</option>
+    <option>消费</option>
+    <option>赠送</option>
+    <option>邀请奖励</option>
+    <option>退款</option>
+  </select>
+  <select class="filter-select">
+    <option>时间范围</option>
+    <option>最近7天</option>
+    <option>最近30天</option>
+    <option>最近90天</option>
+  </select>
+  <input class="filter-input" placeholder="用户邮箱..." style="min-width:160px;">
+  <button class="btn-search">搜索</button>
+</div>
+<div class="table-card">
+  <table>
+    <thead><tr><th>ID</th><th>用户</th><th>类型</th><th>金额</th><th>余额(后)</th><th>描述</th><th>时间</th></tr></thead>
+    <tbody>
+      <tr><td>128</td><td>eve@example.com</td><td><span class="badge badge-success">充值</span></td><td class="text-success font-mono">+10,000</td><td>15,600</td><td>支付宝 · ¥100.00</td><td>02-07 10:16</td></tr>
+      <tr><td>127</td><td>bob@example.com</td><td><span class="badge badge-danger">消费</span></td><td class="text-danger font-mono">-280</td><td>450</td><td>角色对话 · 标准模型</td><td>02-07 09:45</td></tr>
+      <tr><td>126</td><td>horizon@gmail.com</td><td><span class="badge badge-danger">消费</span></td><td class="text-danger font-mono">-150</td><td>12,500</td><td>世界观构建 · 标准模型</td><td>02-07 09:20</td></tr>
+      <tr><td>125</td><td>alice@example.com</td><td><span class="badge badge-danger">消费</span></td><td class="text-danger font-mono">-420</td><td>8,300</td><td>奇幻长篇 · 高级模型</td><td>02-07 08:55</td></tr>
+      <tr><td>124</td><td>henry@example.com</td><td><span class="badge badge-purple">赠送</span></td><td class="text-purple font-mono">+1,000</td><td>2,100</td><td>注册赠送</td><td>02-06 20:00</td></tr>
+      <tr><td>123</td><td>horizon@gmail.com</td><td><span class="badge badge-success">充值</span></td><td class="text-success font-mono">+5,000</td><td>12,650</td><td>支付宝 · ¥50.00</td><td>02-06 14:30</td></tr>
+      <tr><td>122</td><td>horizon@gmail.com</td><td><span class="badge badge-danger">消费</span></td><td class="text-danger font-mono">-320</td><td>7,650</td><td>武侠小说创作 · 标准模型</td><td>02-06 13:22</td></tr>
+      <tr><td>121</td><td>grace@example.com</td><td><span class="badge badge-info">退款</span></td><td class="text-info font-mono">+5,000</td><td>6,700</td><td>订单退款 R20260205003</td><td>02-06 12:00</td></tr>
+      <tr><td>120</td><td>dave@example.com</td><td><span class="badge badge-success">充值</span></td><td class="text-success font-mono">+50,000</td><td>53,200</td><td>支付宝 · ¥500.00</td><td>02-06 09:17</td></tr>
+      <tr><td>119</td><td>frank@example.com</td><td><span class="badge badge-warning">邀请奖励</span></td><td class="text-warning font-mono">+500</td><td>900</td><td>邀请 henry@example.com</td><td>02-06 08:30</td></tr>
+    </tbody>
+  </table>
+  <div class="table-footer">
+    <div class="table-total">共 3,456 条</div>
+    <div class="pagination">
+      <button class="page-btn">&lt;</button>
+      <button class="page-btn active">1</button>
+      <button class="page-btn">2</button>
+      <button class="page-btn">3</button>
+      <button class="page-btn">...</button>
+      <button class="page-btn">173</button>
+      <button class="page-btn">&gt;</button>
+    </div>
+  </div>
+</div>
+`;
+
+pages.announcements = `
+<div class="page-header">
+  <div class="page-title">公告管理</div>
+  <button class="btn-action" onclick="openModal('modal-announce')">+ 发送新公告</button>
+</div>
+<div class="filter-bar">
+  <select class="filter-select">
+    <option>全部类型</option>
+    <option>系统公告</option>
+    <option>账户通知</option>
+    <option>用量提醒</option>
+  </select>
+  <select class="filter-select">
+    <option>时间范围</option>
+    <option>最近7天</option>
+    <option>最近30天</option>
+    <option>最近90天</option>
+  </select>
+  <button class="btn-search">搜索</button>
+</div>
+<div class="table-card">
+  <table>
+    <thead><tr><th>ID</th><th>类型</th><th>标题</th><th>发送对象</th><th>触达人数</th><th>已读率</th><th>发送时间</th><th>操作</th></tr></thead>
+    <tbody>
+      <tr><td>12</td><td><span class="badge badge-info">系统公告</span></td><td>系统维护通知</td><td>全部用户</td><td>1,234</td><td>62%</td><td>02-07 08:00</td><td><button class="btn-danger">删除</button></td></tr>
+      <tr><td>11</td><td><span class="badge badge-purple">用量提醒</span></td><td>Token 用量到达 80%</td><td>bob@example.com</td><td>1</td><td>100%</td><td>02-06 15:30</td><td><button class="btn-danger">删除</button></td></tr>
+      <tr><td>10</td><td><span class="badge badge-info">系统公告</span></td><td>新功能上线：会话消费排行</td><td>全部用户</td><td>1,220</td><td>45%</td><td>02-05 10:00</td><td><button class="btn-danger">删除</button></td></tr>
+      <tr><td>9</td><td><span class="badge badge-info">系统公告</span></td><td>春节活动：充值双倍积分</td><td>全部用户</td><td>1,200</td><td>78%</td><td>02-01 00:00</td><td><button class="btn-danger">删除</button></td></tr>
+      <tr><td>8</td><td><span class="badge badge-warning">账户通知</span></td><td>密码修改成功</td><td>alice@example.com</td><td>1</td><td>100%</td><td>01-30 14:20</td><td><button class="btn-danger">删除</button></td></tr>
+      <tr><td>7</td><td><span class="badge badge-info">系统公告</span></td><td>平台正式上线公告</td><td>全部用户</td><td>1,100</td><td>85%</td><td>01-28 09:00</td><td><button class="btn-danger">删除</button></td></tr>
+    </tbody>
+  </table>
+  <div class="table-footer">
+    <div class="table-total">共 12 条</div>
+    <div class="pagination">
+      <button class="page-btn active">1</button>
+    </div>
+  </div>
+</div>
+`;
+
+pages.configs = `
+<div class="page-header">
+  <div class="page-title">系统配置</div>
+  <button class="btn-action" onclick="alert('配置已保存！')">保存全部修改</button>
+</div>
+
+<div class="config-section">
+  <div class="config-section-title">注册设置</div>
+  <div class="config-row">
+    <span class="config-label">开放注册</span>
+    <div class="config-control"><div class="switch on" onclick="this.classList.toggle('on')"></div></div>
+  </div>
+  <div class="config-row">
+    <span class="config-label">仅邀请码注册</span>
+    <div class="config-control"><div class="switch" onclick="this.classList.toggle('on')"></div></div>
+  </div>
+  <div class="config-row">
+    <span class="config-label">新用户赠送积分</span>
+    <div class="config-control"><input class="config-input" value="1000"><span class="config-unit">点</span></div>
+  </div>
+</div>
+
+<div class="config-section">
+  <div class="config-section-title">邀请奖励</div>
+  <div class="config-row">
+    <span class="config-label">邀请人奖励</span>
+    <div class="config-control"><input class="config-input" value="500"><span class="config-unit">点</span></div>
+  </div>
+  <div class="config-row">
+    <span class="config-label">被邀请人奖励</span>
+    <div class="config-control"><input class="config-input" value="200"><span class="config-unit">点</span></div>
+  </div>
+</div>
+
+<div class="config-section">
+  <div class="config-section-title">余额预警</div>
+  <div class="config-row">
+    <span class="config-label">低余额预警阈值</span>
+    <div class="config-control"><input class="config-input" value="500"><span class="config-unit">点</span></div>
+  </div>
+</div>
+
+<div class="config-section">
+  <div class="config-section-title">充值设置</div>
+  <div class="config-row">
+    <span class="config-label">人民币兑点数</span>
+    <div class="config-control">1 元 = <input class="config-input" value="100" style="width:80px;margin:0 8px;"> 点</div>
+  </div>
+  <div class="config-row">
+    <span class="config-label">最低充值金额</span>
+    <div class="config-control"><input class="config-input" value="1" style="width:80px;"><span class="config-unit">元</span></div>
+  </div>
+  <div class="config-row">
+    <span class="config-label">充值套餐</span>
+    <div class="config-control">
+      <div class="preset-tags">
+        <div class="preset-tag">¥10 → 1,000点</div>
+        <div class="preset-tag">¥50 → 5,000点</div>
+        <div class="preset-tag">¥100 → 10,000点</div>
+        <div class="preset-tag">¥500 → 50,000点</div>
+        <button class="btn-sm" style="margin-left:4px;">编辑套餐</button>
+      </div>
+    </div>
+  </div>
+</div>
+`;
+
+pages['audit-logs'] = `
+<div class="page-header">
+  <div class="page-title">操作日志</div>
+</div>
+<div class="filter-bar">
+  <select class="filter-select">
+    <option>全部操作</option>
+    <option>封禁用户</option>
+    <option>解封用户</option>
+    <option>手动调账</option>
+    <option>重置密码</option>
+    <option>群发公告</option>
+    <option>删除公告</option>
+    <option>修改配置</option>
+  </select>
+  <select class="filter-select">
+    <option>全部操作人</option>
+    <option>admin@gennovel.com</option>
+  </select>
+  <select class="filter-select">
+    <option>时间范围</option>
+    <option>最近7天</option>
+    <option>最近30天</option>
+    <option>最近90天</option>
+  </select>
+  <button class="btn-search">搜索</button>
+</div>
+<div class="table-card">
+  <table>
+    <thead><tr><th>ID</th><th>操作人</th><th>操作类型</th><th>操作对象</th><th>摘要</th><th>IP</th><th>时间</th><th>操作</th></tr></thead>
+    <tbody>
+      <tr><td>89</td><td>admin@gennovel.com</td><td><span class="badge badge-danger">封禁用户</span></td><td>user#5</td><td>carol@example.com — 违规操作</td><td class="font-mono text-muted">192.168.1.100</td><td>02-07 10:32</td><td><button class="btn-sm" onclick="openModal('modal-log-detail')">详情</button></td></tr>
+      <tr><td>88</td><td>admin@gennovel.com</td><td><span class="badge badge-info">手动调账</span></td><td>user#2</td><td>+500 客服补偿</td><td class="font-mono text-muted">192.168.1.100</td><td>02-07 09:15</td><td><button class="btn-sm" onclick="openModal('modal-log-detail')">详情</button></td></tr>
+      <tr><td>87</td><td>admin@gennovel.com</td><td><span class="badge badge-success">群发公告</span></td><td>全部用户</td><td>系统维护通知</td><td class="font-mono text-muted">192.168.1.100</td><td>02-07 08:00</td><td><button class="btn-sm" onclick="openModal('modal-log-detail')">详情</button></td></tr>
+      <tr><td>86</td><td>admin@gennovel.com</td><td><span class="badge badge-warning">修改配置</span></td><td>config</td><td>新用户赠送积分 1000→2000</td><td class="font-mono text-muted">192.168.1.100</td><td>02-06 17:00</td><td><button class="btn-sm" onclick="openModal('modal-log-detail')">详情</button></td></tr>
+      <tr><td>85</td><td>admin@gennovel.com</td><td><span class="badge badge-success">解封用户</span></td><td>user#6</td><td>dave@example.com — 申诉通过</td><td class="font-mono text-muted">192.168.1.100</td><td>02-06 14:20</td><td><button class="btn-sm" onclick="openModal('modal-log-detail')">详情</button></td></tr>
+      <tr><td>84</td><td>admin@gennovel.com</td><td><span class="badge badge-purple">重置密码</span></td><td>user#8</td><td>frank@example.com</td><td class="font-mono text-muted">192.168.1.100</td><td>02-06 11:00</td><td><button class="btn-sm" onclick="openModal('modal-log-detail')">详情</button></td></tr>
+      <tr><td>83</td><td>admin@gennovel.com</td><td><span class="badge badge-info">手动调账</span></td><td>user#4</td><td>-200 误操作回滚</td><td class="font-mono text-muted">192.168.1.100</td><td>02-06 10:15</td><td><button class="btn-sm" onclick="openModal('modal-log-detail')">详情</button></td></tr>
+      <tr><td>82</td><td>admin@gennovel.com</td><td><span class="badge badge-danger">删除公告</span></td><td>message#6</td><td>过期活动公告</td><td class="font-mono text-muted">192.168.1.100</td><td>02-05 16:30</td><td><button class="btn-sm" onclick="openModal('modal-log-detail')">详情</button></td></tr>
+      <tr><td>81</td><td>admin@gennovel.com</td><td><span class="badge badge-success">群发公告</span></td><td>全部用户</td><td>新功能上线：会话消费排行</td><td class="font-mono text-muted">192.168.1.100</td><td>02-05 10:00</td><td><button class="btn-sm" onclick="openModal('modal-log-detail')">详情</button></td></tr>
+      <tr><td>80</td><td>admin@gennovel.com</td><td><span class="badge badge-danger">封禁用户</span></td><td>user#6</td><td>dave@example.com — 恶意刷邀请</td><td class="font-mono text-muted">192.168.1.100</td><td>02-04 15:00</td><td><button class="btn-sm" onclick="openModal('modal-log-detail')">详情</button></td></tr>
+    </tbody>
+  </table>
+  <div class="table-footer">
+    <div class="table-total">共 89 条</div>
+    <div class="pagination">
+      <button class="page-btn">&lt;</button>
+      <button class="page-btn active">1</button>
+      <button class="page-btn">2</button>
+      <button class="page-btn">3</button>
+      <button class="page-btn">...</button>
+      <button class="page-btn">5</button>
+      <button class="page-btn">&gt;</button>
+    </div>
+  </div>
+</div>
+`;
+
+// ===== Navigation =====
+const breadcrumbs = {
+  'dashboard': '仪表盘',
+  'users': '用户管理',
+  'user-detail': '用户管理 / <span>用户详情</span>',
+  'orders': '订单管理',
+  'transactions': '交易流水',
+  'announcements': '公告管理',
+  'configs': '系统配置',
+  'audit-logs': '操作日志'
+};
+
+const menuMap = {
+  'dashboard': 0,
+  'users': 1,
+  'user-detail': 1,
+  'orders': 2,
+  'transactions': 3,
+  'announcements': 4,
+  'configs': 5,
+  'audit-logs': 6
+};
+
+function navigate(page) {
+  document.getElementById('content').innerHTML = pages[page];
+  document.getElementById('breadcrumb').innerHTML = '管理后台 / <span>' + (breadcrumbs[page] || page) + '</span>';
+
+  const items = document.querySelectorAll('.menu-item');
+  items.forEach((item, i) => {
+    item.classList.toggle('active', i === menuMap[page]);
+  });
+}
+
+function showApp() {
+  document.getElementById('page-login').classList.add('hidden');
+  document.getElementById('app').classList.remove('hidden');
+  navigate('dashboard');
+}
+
+function showLogin() {
+  document.getElementById('page-login').classList.remove('hidden');
+  document.getElementById('app').classList.add('hidden');
+}
+
+function openModal(id) { document.getElementById(id).classList.remove('hidden'); }
+function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
+
+function generateBars(count, color) {
+  let bars = '';
+  for (let i = 0; i < count; i++) {
+    const h = 30 + Math.random() * 140;
+    bars += '<div class="chart-bar ' + color + '" style="height:' + h + 'px;"></div>';
+  }
+  return bars;
+}
+
+// Radio toggle
+document.addEventListener('click', function(e) {
+  const item = e.target.closest('.radio-item');
+  if (item) {
+    item.parentElement.querySelectorAll('.radio-item').forEach(r => r.classList.remove('active'));
+    item.classList.add('active');
+  }
+});
+</script>
+
+</body>
+</html>

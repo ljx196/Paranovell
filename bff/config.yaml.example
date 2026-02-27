@@ -1,0 +1,105 @@
+# ===========================================
+# GenNovelWeb BFF 配置文件 (YAML)
+# ===========================================
+# 复制此文件为 config.yaml 并填入实际配置
+# cp config.yaml.example config.yaml
+
+# 环境: development / production
+env: development
+
+# 服务配置
+server:
+  port: 8080
+  read_timeout: 30    # 秒
+  write_timeout: 30   # 秒
+
+# PostgreSQL 数据库配置
+database:
+  host: localhost
+  port: 5432
+  user: postgres
+  password: "your-db-password"
+  dbname: postgres
+  ssl_mode: disable
+  max_open_conns: 100
+  max_idle_conns: 10
+  conn_max_lifetime: 60
+
+# Redis 配置
+redis:
+  host: localhost
+  port: 6379
+  password: ""
+  db: 0
+  pool_size: 100
+
+# JWT 认证配置
+jwt:
+  secret: "your-super-secret-key-change-in-production"
+  access_token_ttl: 15    # Access Token 有效期（分钟）
+  refresh_token_ttl: 7    # Refresh Token 有效期（天）
+  issuer: "gennovelweb"
+
+# 算法后端配置
+algorithm:
+  base_url: "http://localhost:8000"
+  timeout: 30
+  retry: 3
+
+# 日志配置
+log:
+  level: debug
+  format: text
+  output: stdout
+  file_path: "./logs/bff.log"
+
+# 邮件服务配置
+email:
+  smtp_host: ""
+  smtp_port: 587
+  username: ""
+  password: ""
+  from_address: ""
+  from_name: "GenNovelWeb"
+
+# 超级管理员账号（首次启动自动创建）
+admin:
+  email: "admin@gennovel.com"
+  password: "ChangeThisPassword123"
+  nickname: "超级管理员"
+
+# API 限流配置
+rate_limit:
+  enabled: true
+  requests_per_second: 100
+  burst: 200
+
+# 账户余额配置
+balance:
+  initial_gift_points: 1000
+  low_balance_threshold: 500
+  critical_balance_threshold: 100
+  exchange_rate: 100
+  min_recharge_yuan: 1
+  recharge_presets:
+    - { amount_yuan: 10,  points: 1000 }
+    - { amount_yuan: 50,  points: 5000 }
+    - { amount_yuan: 100, points: 10000 }
+    - { amount_yuan: 500, points: 50000 }
+  payment_methods:
+    - alipay
+    - wechat
+  order_timeout_minutes: 30
+  models:
+    - name: standard
+      display_name: 标准模型
+      input_price: 1
+      output_price: 2
+    - name: advanced
+      display_name: 高级模型
+      input_price: 3
+      output_price: 6
+  referral:
+    referrer_reward: 500
+    referee_gift: 1000
+    first_recharge_bonus_rate: 10

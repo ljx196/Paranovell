@@ -1,0 +1,708 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GenNovel - UI Demo</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    /* 自定义滚动条 */
+    ::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: #4a4a4a;
+      border-radius: 4px;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+      background: #5a5a5a;
+    }
+
+    .light ::-webkit-scrollbar-thumb {
+      background: #c4c4c4;
+    }
+
+    .light ::-webkit-scrollbar-thumb:hover {
+      background: #a0a0a0;
+    }
+
+    :root {
+      --bg: #1A1A1A;
+      --bg-secondary: #262626;
+      --bg-tertiary: #2A2A2A;
+      --sidebar: #1F1F1F;
+      --sidebar-hover: #2A2A2A;
+      --text-primary: #EAE6DF;
+      --text-secondary: #A8A29E;
+      --text-muted: #6B6560;
+      --accent: #D4836A;
+      --border: #333333;
+      --user-msg: #242424;
+      --input-bg: #262626;
+      --input-border: #3D3D3D;
+    }
+
+    .light {
+      --bg: #FAFAF9;
+      --bg-secondary: #FFFFFF;
+      --bg-tertiary: #F5F5F4;
+      --sidebar: #F5F5F4;
+      --sidebar-hover: #E7E5E4;
+      --text-primary: #1C1917;
+      --text-secondary: #57534E;
+      --text-muted: #A8A29E;
+      --accent: #C4704F;
+      --border: #E7E5E4;
+      --user-msg: #F5F5F4;
+      --input-bg: #FFFFFF;
+      --input-border: #D6D3D1;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text-primary);
+      height: 100vh;
+      display: flex;
+    }
+
+    /* Sidebar */
+    .sidebar {
+      width: 260px;
+      background: var(--sidebar);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      flex-shrink: 0;
+    }
+
+    .sidebar-header {
+      padding: 16px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .logo-icon {
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      background: var(--accent);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-weight: bold;
+      font-size: 16px;
+    }
+
+    .logo-text {
+      font-size: 18px;
+      font-weight: 600;
+    }
+
+    .new-chat-btn {
+      margin: 12px;
+      padding: 12px;
+      border: 1px dashed var(--border);
+      border-radius: 8px;
+      background: transparent;
+      color: var(--text-secondary);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      font-size: 14px;
+    }
+
+    .new-chat-btn:hover {
+      background: var(--sidebar-hover);
+    }
+
+    .conversations {
+      flex: 1;
+      overflow-y: auto;
+      padding: 0 12px;
+    }
+
+    .section-title {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin: 8px 4px;
+      font-weight: 500;
+    }
+
+    .conv-item {
+      padding: 12px;
+      border-radius: 8px;
+      margin-bottom: 4px;
+      cursor: pointer;
+    }
+
+    .conv-item:hover, .conv-item.active {
+      background: var(--sidebar-hover);
+    }
+
+    .conv-item.active .conv-title {
+      color: var(--text-primary);
+      font-weight: 500;
+    }
+
+    .conv-title {
+      font-size: 14px;
+      color: var(--text-secondary);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .conv-time {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
+
+    .sidebar-footer {
+      padding: 12px;
+      border-top: 1px solid var(--border);
+    }
+
+    .user-info {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 8px;
+    }
+
+    .user-avatar {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: var(--accent);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-weight: 600;
+    }
+
+    .user-details {
+      flex: 1;
+    }
+
+    .user-name {
+      font-size: 14px;
+      font-weight: 500;
+    }
+
+    .user-plan {
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    /* Main Content */
+    .main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .header {
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--border);
+      background: var(--bg-secondary);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .header-title {
+      font-size: 16px;
+      font-weight: 500;
+    }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .theme-toggle {
+      padding: 8px;
+      border-radius: 8px;
+      background: var(--bg-tertiary);
+      border: none;
+      cursor: pointer;
+      font-size: 16px;
+    }
+
+    /* Messages */
+    .messages {
+      flex: 1;
+      overflow-y: auto;
+    }
+
+    .message {
+      padding: 24px 48px;
+    }
+
+    .message.user {
+      background: var(--user-msg);
+    }
+
+    .message-inner {
+      max-width: 768px;
+      margin: 0 auto;
+    }
+
+    .message-content {
+      flex: 1;
+    }
+
+    .message-text {
+      font-size: 15px;
+      line-height: 1.8;
+      white-space: pre-wrap;
+    }
+
+    .message.user .message-text {
+      color: var(--text-primary);
+    }
+
+    .message.assistant .message-text {
+      color: var(--text-secondary);
+    }
+
+    /* Input */
+    .input-area {
+      padding: 16px;
+      padding-bottom: 24px;
+    }
+
+    .input-container {
+      max-width: 768px;
+      margin: 0 auto;
+    }
+
+    .input-box {
+      display: flex;
+      align-items: flex-end;
+      background: var(--input-bg);
+      border: 1px solid var(--input-border);
+      border-radius: 16px;
+      padding: 12px 16px;
+      gap: 12px;
+    }
+
+    .attach-btn {
+      background: none;
+      border: none;
+      font-size: 20px;
+      cursor: pointer;
+      padding: 0;
+    }
+
+    .input-field {
+      flex: 1;
+      background: transparent;
+      border: none;
+      outline: none;
+      font-size: 15px;
+      color: var(--text-primary);
+      resize: none;
+      font-family: inherit;
+      line-height: 1.4;
+    }
+
+    .input-field::placeholder {
+      color: var(--text-muted);
+    }
+
+    .send-btn {
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      background: var(--accent);
+      border: none;
+      color: white;
+      font-size: 16px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .input-hint {
+      text-align: center;
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-top: 8px;
+    }
+
+    /* Typing indicator */
+    .typing {
+      display: flex;
+      gap: 4px;
+      align-items: center;
+    }
+
+    .typing-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--accent);
+      animation: typing 1.4s infinite;
+    }
+
+    .typing-dot:nth-child(2) { animation-delay: 0.2s; }
+    .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+
+    @keyframes typing {
+      0%, 60%, 100% { opacity: 0.3; }
+      30% { opacity: 1; }
+    }
+
+    /* 加载更多 */
+    .load-more {
+      display: none;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      padding: 20px;
+      color: var(--text-muted);
+      font-size: 14px;
+    }
+
+    .load-more.visible {
+      display: flex;
+    }
+
+    .load-spinner {
+      width: 18px;
+      height: 18px;
+      border: 2px solid var(--border);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+  </style>
+</head>
+<body>
+  <!-- Sidebar -->
+  <div class="sidebar">
+    <div class="sidebar-header">
+      <div class="logo">
+        <div class="logo-icon">G</div>
+        <span class="logo-text">GenNovel</span>
+      </div>
+      <span style="color: var(--text-muted); cursor: pointer;">‹</span>
+    </div>
+
+    <button class="new-chat-btn">
+      <span>+</span>
+      <span>新建会话</span>
+    </button>
+
+    <div class="conversations">
+      <div class="section-title">最近会话</div>
+      <div class="conv-item active">
+        <div class="conv-title">小说角色设定讨论</div>
+        <div class="conv-time">刚刚</div>
+      </div>
+      <div class="conv-item">
+        <div class="conv-title">第三章剧情构思</div>
+        <div class="conv-time">2小时前</div>
+      </div>
+      <div class="conv-item">
+        <div class="conv-title">世界观设定</div>
+        <div class="conv-time">昨天</div>
+      </div>
+      <div class="conv-item">
+        <div class="conv-title">对话风格优化</div>
+        <div class="conv-time">3天前</div>
+      </div>
+    </div>
+
+    <div class="sidebar-footer">
+      <div class="user-info">
+        <div class="user-avatar">U</div>
+        <div class="user-details">
+          <div class="user-name">用户名</div>
+          <div class="user-plan">免费版</div>
+        </div>
+        <span style="color: var(--text-muted);">⋯</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Content -->
+  <div class="main">
+    <div class="header">
+      <span class="header-title">小说角色设定讨论</span>
+      <div class="header-actions">
+        <button class="theme-toggle" onclick="toggleTheme()">☀️</button>
+        <span style="color: var(--text-secondary);">⋮</span>
+      </div>
+    </div>
+
+    <div class="messages" id="messages" onscroll="handleScroll()">
+      <!-- 顶部加载指示器 -->
+      <div class="load-more" id="loadMore">
+        <div class="load-spinner"></div>
+        <span>加载更多消息...</span>
+      </div>
+      <div class="message user">
+        <div class="message-inner">
+          <div class="message-content">
+            <div class="message-text">我想创作一个玄幻小说，主角是一个从现代穿越的程序员，你能帮我设计一下他的人物背景吗？</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="message assistant">
+        <div class="message-inner">
+          <div class="message-content">
+            <div class="message-text">这是一个很有趣的设定！一个程序员穿越到玄幻世界，可以产生很多有意思的冲突和故事。让我帮你设计这个角色：
+
+【基础信息】
+• 姓名：林逸（现代名）/ 凌尘（修仙名）
+• 年龄：28岁穿越，修仙界重生为16岁少年
+• 职业：前世是某大厂资深后端工程师
+
+【性格特点】
+• 理性思维：习惯用逻辑分析问题，对修仙界的"玄学"持怀疑态度
+• 效率至上：试图用编程思维优化修炼方法
+• 内敛沉稳：经历过996的毒打，心态成熟
+
+【核心冲突】
+他会发现修仙界的功法其实类似于"程序"，而灵气就像是"计算资源"...
+
+需要我继续展开某个方面吗？</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="message user">
+        <div class="message-inner">
+          <div class="message-content">
+            <div class="message-text">太棒了！我很喜欢这个设定。能再帮我想想他的金手指是什么吗？</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="message assistant">
+        <div class="message-inner">
+          <div class="message-content">
+            <div class="message-text">好的！既然主角是程序员出身，金手指可以和编程概念结合。这里给你几个方向：
+
+【方案一：代码之眼】
+能看到万物的"底层代码"，包括功法的运行逻辑、丹药的配方结构。相当于拥有了修仙界的"调试器"，可以发现别人功法中的bug并加以利用。
+
+【方案二：系统编译器】
+可以将任何功法"反编译"成基础指令，然后重新"编译优化"。别人需要十年才能练成的功法，他用算法优化后三个月就能速成。
+
+【方案三：多线程修炼】
+意识可以分成多个"线程"同时运行，一边修炼一边炼丹一边推演功法。相当于别人单核CPU，他是多核并行处理。
+
+【方案四：版本控制】
+拥有类似Git的能力，可以给自己的修炼状态打"快照"。如果走火入魔可以回滚到之前的稳定版本。
+
+你更喜欢哪个方向？我可以继续细化。</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="message user">
+        <div class="message-inner">
+          <div class="message-content">
+            <div class="message-text">方案四太有意思了！版本控制这个概念很新颖，能详细展开讲讲吗？比如这个能力有什么限制？</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="message assistant">
+        <div class="message-inner">
+          <div class="message-content">
+            <div class="message-text">【版本控制金手指 - 详细设定】
+
+🔹 基础能力：灵魂快照
+主角可以在任意时刻对自己的修炼状态创建"commit"，记录当前的：
+• 修为境界
+• 功法熟练度
+• 身体状态
+• 甚至部分记忆
+
+🔹 核心技能
+
+1️⃣ git commit - 创建存档点
+   消耗：根据修为高低，需要消耗一定灵力
+   限制：最多保存7个存档（七日之内）
+
+2️⃣ git checkout - 状态回滚
+   可以回到之前的任意存档点
+   代价：回滚后，中间的所有修炼进度全部丢失
+   冷却：每次回滚需要休息三天
+
+3️⃣ git diff - 状态对比
+   可以对比两个存档的差异，分析修炼中哪里出了问题
+   这个技能几乎无消耗，是最常用的
+
+4️⃣ git merge（后期解锁）
+   可以融合不同分支的修炼成果
+   比如：一个存档专门练体，一个专门练气，最后merge
+
+🔹 限制与平衡
+
+• 存档有"过期时间"，超过七天自动删除
+• 回滚不能改变外部世界，只能改变自己
+• 如果身体被彻底摧毁，无法回滚
+• 每次回滚会有"时间线排斥"，连续回滚代价递增
+
+这样设定既保留了金手指的强大，又不会太过逆天。你觉得如何？</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="message user">
+        <div class="message-inner">
+          <div class="message-content">
+            <div class="message-text">这个设定太棒了！我想再加一个有趣的点：主角第一次发现这个能力是在什么情况下？能不能设计一个有戏剧性的开场？</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="message assistant">
+        <div class="message-inner">
+          <div class="message-content">
+            <div class="typing">
+              <div class="typing-dot"></div>
+              <div class="typing-dot"></div>
+              <div class="typing-dot"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="input-area">
+      <div class="input-container">
+        <div class="input-box">
+          <button class="attach-btn">📎</button>
+          <textarea class="input-field" rows="1" placeholder="输入你的创意想法..."></textarea>
+          <button class="send-btn">↑</button>
+        </div>
+        <div class="input-hint">GenNovel 可能会出错，请核实重要信息</div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let isDark = true;
+    let isLoading = false;
+    let hasMoreHistory = true;
+
+    function toggleTheme() {
+      isDark = !isDark;
+      document.body.classList.toggle('light', !isDark);
+      document.querySelector('.theme-toggle').textContent = isDark ? '☀️' : '🌙';
+    }
+
+    // 历史消息模板
+    const historyMessages = [
+      { role: 'user', text: '你好，我想写一本小说，能帮我吗？' },
+      { role: 'assistant', text: '当然可以！我很乐意帮助你创作小说。请告诉我：\n\n1. 你想写什么类型的小说？（玄幻、都市、科幻、言情等）\n2. 有没有初步的故事构思？\n3. 目标读者群体是谁？\n\n这些信息能帮助我更好地为你提供建议。' },
+      { role: 'user', text: '我想写玄幻类的，主角最好有点特别的背景' },
+      { role: 'assistant', text: '玄幻小说是个很好的选择！关于主角的特别背景，这里有几个方向供你参考：\n\n【现代穿越系】\n主角从现代穿越到修仙世界，带着现代知识和思维方式\n\n【重生复仇系】\n主角重生回到年少时期，带着前世记忆改变命运\n\n【废材逆袭系】\n主角一开始是被人看不起的废物，后来觉醒特殊体质\n\n【神秘身世系】\n主角身世成谜，逐渐揭开自己的惊天来历\n\n你对哪个方向更感兴趣？' },
+    ];
+
+    let loadCount = 0;
+
+    function handleScroll() {
+      const messages = document.getElementById('messages');
+      const loadMore = document.getElementById('loadMore');
+
+      // 当滚动到顶部附近时触发加载
+      if (messages.scrollTop < 50 && !isLoading && hasMoreHistory) {
+        loadMoreMessages();
+      }
+    }
+
+    function loadMoreMessages() {
+      if (loadCount >= 2) {
+        hasMoreHistory = false;
+        document.getElementById('loadMore').innerHTML = '<span style="color: var(--text-muted);">没有更多消息了</span>';
+        document.getElementById('loadMore').classList.add('visible');
+        setTimeout(() => {
+          document.getElementById('loadMore').classList.remove('visible');
+        }, 2000);
+        return;
+      }
+
+      isLoading = true;
+      const loadMore = document.getElementById('loadMore');
+      const messages = document.getElementById('messages');
+
+      loadMore.classList.add('visible');
+
+      // 记录当前滚动位置和高度
+      const previousHeight = messages.scrollHeight;
+
+      // 模拟网络延迟
+      setTimeout(() => {
+        // 插入历史消息
+        const fragment = document.createDocumentFragment();
+
+        historyMessages.forEach(msg => {
+          const messageDiv = document.createElement('div');
+          messageDiv.className = `message ${msg.role}`;
+          messageDiv.innerHTML = `
+            <div class="message-inner">
+              <div class="message-content">
+                <div class="message-text">${msg.text}</div>
+              </div>
+            </div>
+          `;
+          fragment.appendChild(messageDiv);
+        });
+
+        // 在加载指示器后面插入
+        loadMore.after(fragment);
+
+        // 保持滚动位置
+        const newHeight = messages.scrollHeight;
+        messages.scrollTop = newHeight - previousHeight;
+
+        loadMore.classList.remove('visible');
+        isLoading = false;
+        loadCount++;
+      }, 1000);
+    }
+
+    // 初始滚动到底部
+    window.onload = function() {
+      const messages = document.getElementById('messages');
+      messages.scrollTop = messages.scrollHeight;
+    };
+  </script>
+</body>
+</html>
