@@ -4,6 +4,7 @@
  */
 
 import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
+import { Platform } from 'react-native';
 import { darkColors, lightColors, ThemeColors, ThemeMode } from './colors';
 import { spacing, borderRadius, layout, padding, messagePadding } from './spacing';
 import { typography } from './typography';
@@ -51,6 +52,14 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
   useEffect(() => {
     setCurrentMode(mode);
   }, [mode]);
+
+  // Sync theme class to document root for CSS selectors (scrollbar, etc.)
+  useEffect(() => {
+    if (Platform.OS === 'web' && typeof document !== 'undefined') {
+      document.documentElement.classList.remove('dark', 'light');
+      document.documentElement.classList.add(currentMode);
+    }
+  }, [currentMode]);
 
   const colors = currentMode === 'dark' ? darkColors : lightColors;
 

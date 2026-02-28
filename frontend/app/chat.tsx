@@ -1,5 +1,5 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
-import { View, ScrollView, NativeSyntheticEvent, NativeScrollEvent, Text } from 'react-native';
+import { View, ScrollView, Animated, Easing, NativeSyntheticEvent, NativeScrollEvent, Text, Platform } from 'react-native';
 import { router, Redirect } from 'expo-router';
 import { useTheme } from '../src/theme';
 import { useResponsive } from '../src/hooks/useResponsive';
@@ -11,10 +11,11 @@ import {
   ChatInput,
   TypingIndicator,
   LoadMoreIndicator,
-  Conversation,
   MessageImage,
+  QuickReplies,
 } from '../src/components/chat';
 import { api } from '../src/services/api';
+import { useChatStore } from '../src/store/useChatStore';
 import { useBalanceStore } from '../src/store/useBalanceStore';
 import { LowBalanceModal } from '../src/components/usage';
 
@@ -86,27 +87,61 @@ interface Message {
 }
 
 export default function ChatScreen() {
-  const { colors, messagePadding: msgPad, typography } = useTheme();
+  const { colors, messagePadding: msgPad, typography, spacing } = useTheme();
   const { isMobile, isDesktop } = useResponsive();
   const { user, isAuthenticated, isLoading: authLoading } = useAuthStore();
   const { fetchBalance, setShowLowBalanceModal } = useBalanceStore();
+  const {
+    sidebarConversations: conversations,
+    isLoadingConversations,
+    loadConversations,
+    setActiveConversation,
+  } = useChatStore();
 
   const [sidebarOpen, setSidebarOpen] = useState(!isMobile);
-  const [conversations, setConversations] = useState<Conversation[]>([]);
   const [messages, setMessages] = useState<Message[]>(demoMessages);
   const [inputValue, setInputValue] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [hasMoreHistory, setHasMoreHistory] = useState(true);
   const [activeConversationId, setActiveConversationId] = useState<number | null>(null);
-  const [isLoadingConversations, setIsLoadingConversations] = useState(true);
   const [mounted, setMounted] = useState(false);
+  const [quickReplies, setQuickReplies] = useState<{ id: number; content: string }[]>([]);
+  const [bottomHeight, setBottomHeight] = useState(150);
+  const bottomRef = useRef<View>(null);
+  const [scrollbarWidth, setScrollbarWidth] = useState(0);
+
+  const [inputExpanded, setInputExpanded] = useState(false);
+  const fadeAnim = useRef(new Animated.Value(1)).current;
+
+  const animatedSetInputExpanded = useCallback((value: boolean) => {
+    Animated.timing(fadeAnim, {
+      toValue: 0,
+      duration: 60,
+      easing: Easing.in(Easing.ease),
+      useNativeDriver: true,
+    }).start(() => {
+      setInputExpanded(value);
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 100,
+        easing: Easing.out(Easing.ease),
+        useNativeDriver: true,
+      }).start();
+    });
+  }, [fadeAnim]);
 
   const scrollViewRef = useRef<ScrollView>(null);
 
-  // Mark as mounted
+  // Mark as mounted + measure scrollbar width on web
   useEffect(() => {
     setMounted(true);
+    if (Platform.OS === 'web') {
+      const scrollEl = (scrollViewRef.current as any)?._node ?? (scrollViewRef.current as any)?.getHostNode?.() ?? scrollViewRef.current;
+      if (scrollEl && 'offsetWidth' in scrollEl) {
+        setScrollbarWidth(scrollEl.offsetWidth - scrollEl.clientWidth);
+      }
+    }
   }, []);
 
   // Auth state logged for debugging
@@ -123,60 +158,26 @@ export default function ChatScreen() {
     }
   }, [isAuthenticated]);
 
-  const loadConversations = async () => {
-    setIsLoadingConversations(true);
-    try {
-      const response = await api.getConversations();
-      const apiConversations = response.data?.conversations || [];
+  // Load quick replies
+  useEffect(() => {
+    if (isAuthenticated) {
+      api.getQuickReplies()
+        .then((res) => setQuickReplies(res.items || []))
+        .catch(() => {});
+    }
+  }, [isAuthenticated]);
 
-      if (apiConversations.length > 0) {
-        // Transform API response to Conversation format
-        const formattedConversations: Conversation[] = apiConversations.map((c: any, index: number) => ({
-          id: c.id,
-          title: c.title || '新会话',
-          time: formatTime(c.updatedAt || c.createdAt),
-          active: index === 0,
-        }));
-        setConversations(formattedConversations);
-        const firstId = formattedConversations[0].id;
-        setActiveConversationId(typeof firstId === 'number' ? firstId : null);
-      } else {
-        // No conversations, show demo
-        setConversations([
-          { id: 'demo', title: '演示对话', time: '刚刚', active: true },
-        ]);
-        setActiveConversationId(null);
+  // Measure bottom area height dynamically
+  useEffect(() => {
+    requestAnimationFrame(() => {
+      if (Platform.OS === 'web' && bottomRef.current) {
+        const el = (bottomRef.current as any)?._node ?? (bottomRef.current as any)?.getHostNode?.() ?? bottomRef.current;
+        if (el && el.offsetHeight) {
+          setBottomHeight(el.offsetHeight);
+        }
       }
-    } catch (error) {
-      console.error('Failed to load conversations:', error);
-      // Fallback to demo
-      setConversations([
-        { id: 'demo', title: '演示对话', time: '刚刚', active: true },
-      ]);
-    } finally {
-      setIsLoadingConversations(false);
-    }
-  };
-
-  const formatTime = (dateString: string): string => {
-    if (!dateString) return '';
-    const date = new Date(dateString);
-    const now = new Date();
-    const diff = now.getTime() - date.getTime();
-    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-
-    if (days === 0) {
-      const hours = Math.floor(diff / (1000 * 60 * 60));
-      if (hours === 0) return '刚刚';
-      return `${hours}小时前`;
-    } else if (days === 1) {
-      return '昨天';
-    } else if (days < 7) {
-      return `${days}天前`;
-    } else {
-      return date.toLocaleDateString('zh-CN');
-    }
-  };
+    });
+  }, [quickReplies, inputExpanded]);
 
   const handleScroll = useCallback(
     (event: NativeSyntheticEvent<NativeScrollEvent>) => {
@@ -196,9 +197,7 @@ export default function ChatScreen() {
     }, 1500);
   };
 
-  const handleSend = async () => {
-    if (!inputValue.trim()) return;
-
+  const doSendMessage = async (text: string) => {
     // Check balance before sending
     try {
       const checkResult = await api.checkBalance();
@@ -213,12 +212,12 @@ export default function ChatScreen() {
     const userMessage: Message = {
       id: Date.now(),
       role: 'user',
-      content: inputValue,
+      content: text,
     };
 
     setMessages((prev) => [...prev, userMessage]);
-    setInputValue('');
     setIsTyping(true);
+    animatedSetInputExpanded(false);
 
     // Scroll to bottom
     setTimeout(() => {
@@ -228,7 +227,7 @@ export default function ChatScreen() {
     // Try to send to backend, fallback to demo response
     try {
       if (activeConversationId) {
-        await api.sendMessage(activeConversationId, inputValue);
+        await api.sendMessage(activeConversationId, text);
         // In real implementation, we would receive AI response via WebSocket or polling
       }
     } catch (error) {
@@ -241,15 +240,32 @@ export default function ChatScreen() {
       const aiResponse: Message = {
         id: Date.now() + 1,
         role: 'assistant',
-        content: generateDemoResponse(inputValue),
+        content: generateDemoResponse(text),
       };
       setMessages((prev) => [...prev, aiResponse]);
       setIsTyping(false);
+
+      // Reload quick replies after AI response
+      api.getQuickReplies()
+        .then((res) => setQuickReplies(res.items || []))
+        .catch(() => {});
 
       setTimeout(() => {
         scrollViewRef.current?.scrollToEnd({ animated: true });
       }, 100);
     }, 1500 + Math.random() * 1000);
+  };
+
+  const handleSend = async () => {
+    if (!inputValue.trim()) return;
+    const text = inputValue;
+    setInputValue('');
+    await doSendMessage(text);
+  };
+
+  const handleQuickReply = async (content: string) => {
+    setQuickReplies([]);
+    await doSendMessage(content);
   };
 
   const generateDemoResponse = (userInput: string): string => {
@@ -266,17 +282,12 @@ export default function ChatScreen() {
     setIsTyping(false);
     setHasMoreHistory(true);
     setActiveConversationId(null);
-
-    // Update conversation list to show new chat as active
-    setConversations((prev) =>
-      prev.map((c) => ({ ...c, active: false }))
-    );
+    setActiveConversation(null);
+    animatedSetInputExpanded(false);
   };
 
   const handleSelectConversation = (id: number | string) => {
-    setConversations((prev) =>
-      prev.map((c) => ({ ...c, active: c.id === id }))
-    );
+    setActiveConversation(id);
 
     if (typeof id === 'number') {
       setActiveConversationId(id);
@@ -334,57 +345,91 @@ export default function ChatScreen() {
           onMenuPress={() => setSidebarOpen(true)}
         />
 
-        {/* Messages */}
-        <ScrollView
-          ref={scrollViewRef}
-          style={{ flex: 1 }}
-          onScroll={handleScroll}
-          scrollEventThrottle={16}
-        >
-          <LoadMoreIndicator
-            visible={isLoadingMore || !hasMoreHistory}
-            loading={isLoadingMore}
-            noMore={!hasMoreHistory}
-          />
+        {/* Messages + Bottom overlay container */}
+        <View style={{ flex: 1, position: 'relative' }}>
+          {/* ScrollView takes full height */}
+          <ScrollView
+            ref={scrollViewRef}
+            style={{ flex: 1 }}
+            contentContainerStyle={{ paddingBottom: bottomHeight }}
+            onScroll={handleScroll}
+            scrollEventThrottle={16}
+          >
+            <LoadMoreIndicator
+              visible={isLoadingMore || !hasMoreHistory}
+              loading={isLoadingMore}
+              noMore={!hasMoreHistory}
+            />
 
-          {messages.length === 0 ? (
-            <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', paddingVertical: 100 }}>
-              <Text style={{ color: colors.textMuted, fontSize: typography.bodyLarge.fontSize }}>
-                开始新的对话吧
-              </Text>
-            </View>
-          ) : (
-            messages.map((msg) => (
-              <MessageBubble
-                key={msg.id}
-                role={msg.role}
-                content={msg.content}
-                images={msg.images}
-              />
-            ))
-          )}
+            {messages.length === 0 ? (
+              <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', paddingVertical: 100 }}>
+                <Text style={{ color: colors.textMuted, fontSize: typography.bodyLarge.fontSize }}>
+                  开始新的对话吧
+                </Text>
+              </View>
+            ) : (
+              messages.map((msg) => (
+                <MessageBubble
+                  key={msg.id}
+                  role={msg.role}
+                  content={msg.content}
+                  images={msg.images}
+                />
+              ))
+            )}
 
-          {isTyping && (
-            <View
+            {isTyping && (
+              <View
+                style={{
+                  paddingVertical: msgPad.mobile.vertical,
+                  paddingHorizontal: isMobile ? msgPad.mobile.horizontal : msgPad.desktop.horizontal,
+                }}
+              >
+                <View style={{ maxWidth: 768, alignSelf: 'center', width: '100%' }}>
+                  <TypingIndicator />
+                </View>
+              </View>
+            )}
+          </ScrollView>
+
+          {/* Bottom area: absolute positioned over ScrollView */}
+          <View
+            ref={bottomRef}
+            pointerEvents="box-none"
+            onLayout={(e) => setBottomHeight(e.nativeEvent.layout.height)}
+            style={{
+              position: 'absolute',
+              bottom: 0,
+              left: 0,
+              right: scrollbarWidth,
+              backgroundColor: colors.bgPrimary,
+            }}
+          >
+            {/* Quick Replies */}
+            <QuickReplies items={quickReplies} onSelect={handleQuickReply} />
+
+            {/* Input */}
+            <Animated.View
               style={{
-                paddingVertical: msgPad.mobile.vertical,
-                paddingHorizontal: isMobile ? msgPad.mobile.horizontal : msgPad.desktop.horizontal,
+                opacity: fadeAnim,
+                transform: [{
+                  translateY: fadeAnim.interpolate({
+                    inputRange: [0, 1],
+                    outputRange: [6, 0],
+                  }),
+                }],
               }}
             >
-              <View style={{ maxWidth: 768, alignSelf: 'center', width: '100%' }}>
-                <TypingIndicator />
-              </View>
-            </View>
-          )}
-        </ScrollView>
-
-        {/* Input */}
-        <ChatInput
-          value={inputValue}
-          onChangeText={setInputValue}
-          onSend={handleSend}
-          onAttach={() => {}}
-        />
+              <ChatInput
+                value={inputValue}
+                onChangeText={setInputValue}
+                onSend={handleSend}
+                expanded={inputExpanded}
+                onExpand={() => animatedSetInputExpanded(true)}
+              />
+            </Animated.View>
+          </View>
+        </View>
       </View>
     </View>
   );

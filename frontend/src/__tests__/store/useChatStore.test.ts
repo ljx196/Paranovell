@@ -1,11 +1,11 @@
 import { useChatStore } from '../../store/useChatStore';
+import type { SidebarConversation } from '../../store/useChatStore';
 
-const makeConversation = (id: number, title = `Conv ${id}`) => ({
+const makeSidebarConversation = (id: number, title = `Conv ${id}`): SidebarConversation => ({
   id,
   title,
-  status: 1,
-  createdAt: '2025-01-01T00:00:00Z',
-  updatedAt: '2025-01-01T00:00:00Z',
+  time: '刚刚',
+  active: false,
 });
 
 const makeMessage = (id: number, conversationId: number, role: 'user' | 'assistant' = 'user') => ({
@@ -19,7 +19,8 @@ const makeMessage = (id: number, conversationId: number, role: 'user' | 'assista
 
 beforeEach(() => {
   useChatStore.setState({
-    conversations: [],
+    sidebarConversations: [],
+    isLoadingConversations: false,
     currentConversationId: null,
     messages: {},
     isLoading: false,
@@ -30,48 +31,34 @@ beforeEach(() => {
 describe('useChatStore', () => {
   test('has correct initial state', () => {
     const state = useChatStore.getState();
-    expect(state.conversations).toEqual([]);
+    expect(state.sidebarConversations).toEqual([]);
+    expect(state.isLoadingConversations).toBe(false);
     expect(state.currentConversationId).toBeNull();
     expect(state.messages).toEqual({});
     expect(state.isLoading).toBe(false);
     expect(state.isSending).toBe(false);
   });
 
-  test('setConversations replaces conversations', () => {
-    const convs = [makeConversation(1), makeConversation(2)];
-    useChatStore.getState().setConversations(convs);
-    expect(useChatStore.getState().conversations).toEqual(convs);
+  test('setActiveConversation updates active flag', () => {
+    useChatStore.setState({
+      sidebarConversations: [makeSidebarConversation(1), makeSidebarConversation(2)],
+    });
+    useChatStore.getState().setActiveConversation(2);
+    const convs = useChatStore.getState().sidebarConversations;
+    expect(convs.find(c => c.id === 2)?.active).toBe(true);
+    expect(convs.find(c => c.id === 1)?.active).toBe(false);
   });
 
-  test('addConversation prepends to list', () => {
-    useChatStore.getState().setConversations([makeConversation(1)]);
-    useChatStore.getState().addConversation(makeConversation(2));
-    const convs = useChatStore.getState().conversations;
-    expect(convs).toHaveLength(2);
-    expect(convs[0].id).toBe(2);
-    expect(convs[1].id).toBe(1);
-  });
-
-  test('removeConversation removes by id', () => {
-    useChatStore.getState().setConversations([makeConversation(1), makeConversation(2), makeConversation(3)]);
-    useChatStore.getState().removeConversation(2);
-    const convs = useChatStore.getState().conversations;
-    expect(convs).toHaveLength(2);
-    expect(convs.find(c => c.id === 2)).toBeUndefined();
-  });
-
-  test('removeConversation clears currentConversationId if it matches', () => {
-    useChatStore.getState().setConversations([makeConversation(1), makeConversation(2)]);
-    useChatStore.getState().setCurrentConversation(1);
-    useChatStore.getState().removeConversation(1);
-    expect(useChatStore.getState().currentConversationId).toBeNull();
-  });
-
-  test('removeConversation does not clear currentConversationId if different', () => {
-    useChatStore.getState().setConversations([makeConversation(1), makeConversation(2)]);
-    useChatStore.getState().setCurrentConversation(2);
-    useChatStore.getState().removeConversation(1);
-    expect(useChatStore.getState().currentConversationId).toBe(2);
+  test('setActiveConversation with null clears all active flags', () => {
+    useChatStore.setState({
+      sidebarConversations: [
+        { ...makeSidebarConversation(1), active: true },
+        makeSidebarConversation(2),
+      ],
+    });
+    useChatStore.getState().setActiveConversation(null);
+    const convs = useChatStore.getState().sidebarConversations;
+    expect(convs.every(c => !c.active)).toBe(true);
   });
 
   test('setCurrentConversation sets id', () => {
@@ -136,14 +123,16 @@ describe('useChatStore', () => {
     expect(useChatStore.getState().isSending).toBe(true);
   });
 
-  test('clearChat resets conversations, currentConversationId, and messages', () => {
-    useChatStore.getState().setConversations([makeConversation(1)]);
+  test('clearChat resets sidebarConversations, currentConversationId, and messages', () => {
+    useChatStore.setState({
+      sidebarConversations: [makeSidebarConversation(1)],
+    });
     useChatStore.getState().setCurrentConversation(1);
     useChatStore.getState().setMessages(1, [makeMessage(1, 1)]);
 
     useChatStore.getState().clearChat();
     const state = useChatStore.getState();
-    expect(state.conversations).toEqual([]);
+    expect(state.sidebarConversations).toEqual([]);
     expect(state.currentConversationId).toBeNull();
     expect(state.messages).toEqual({});
   });

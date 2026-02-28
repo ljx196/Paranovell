@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { api } from '../services/api';
 
 interface Message {
   id: number;
@@ -9,25 +10,29 @@ interface Message {
   createdAt: string;
 }
 
-interface Conversation {
-  id: number;
+// Sidebar-compatible conversation format
+export interface SidebarConversation {
+  id: number | string;
   title: string;
-  status: number;
-  createdAt: string;
-  updatedAt: string;
+  time: string;
+  active?: boolean;
 }
 
 interface ChatState {
-  conversations: Conversation[];
+  // Sidebar conversations (shared across pages)
+  sidebarConversations: SidebarConversation[];
+  isLoadingConversations: boolean;
+
   currentConversationId: number | null;
   messages: Record<number, Message[]>;
   isLoading: boolean;
   isSending: boolean;
 
-  // Actions
-  setConversations: (conversations: Conversation[]) => void;
-  addConversation: (conversation: Conversation) => void;
-  removeConversation: (id: number) => void;
+  // Sidebar actions
+  loadConversations: () => Promise<void>;
+  setActiveConversation: (id: number | string | null) => void;
+
+  // Message actions
   setCurrentConversation: (id: number | null) => void;
   setMessages: (conversationId: number, messages: Message[]) => void;
   addMessage: (conversationId: number, message: Message) => void;
@@ -37,22 +42,76 @@ interface ChatState {
   clearChat: () => void;
 }
 
+function formatTime(dateString: string): string {
+  if (!dateString) return '';
+  const date = new Date(dateString);
+  const now = new Date();
+  const diff = now.getTime() - date.getTime();
+  const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+
+  if (days === 0) {
+    const hours = Math.floor(diff / (1000 * 60 * 60));
+    if (hours === 0) return '刚刚';
+    return `${hours}小时前`;
+  } else if (days === 1) {
+    return '昨天';
+  } else if (days < 7) {
+    return `${days}天前`;
+  } else {
+    return date.toLocaleDateString('zh-CN');
+  }
+}
+
+const DEMO_CONVERSATIONS: SidebarConversation[] = [
+  { id: 'demo', title: '演示对话', time: '刚刚', active: true },
+];
+
 export const useChatStore = create<ChatState>((set, get) => ({
-  conversations: [],
+  sidebarConversations: [],
+  isLoadingConversations: false,
+
   currentConversationId: null,
   messages: {},
   isLoading: false,
   isSending: false,
 
-  setConversations: (conversations) => set({ conversations }),
+  loadConversations: async () => {
+    const { sidebarConversations } = get();
+    // Only show loading if we have no data yet (avoids flicker on refresh)
+    if (sidebarConversations.length === 0) {
+      set({ isLoadingConversations: true });
+    }
+    try {
+      const response = await api.getConversations();
+      const apiConversations = response.data?.conversations || [];
 
-  addConversation: (conversation) => set((state) => ({
-    conversations: [conversation, ...state.conversations],
-  })),
+      if (apiConversations.length > 0) {
+        const formatted: SidebarConversation[] = apiConversations.map((c: any, index: number) => ({
+          id: c.id,
+          title: c.title || '新会话',
+          time: formatTime(c.updatedAt || c.createdAt),
+          active: index === 0,
+        }));
+        set({ sidebarConversations: formatted });
+      } else {
+        set({ sidebarConversations: DEMO_CONVERSATIONS });
+      }
+    } catch (error) {
+      console.error('Failed to load conversations:', error);
+      // Only fallback to demo if we have nothing
+      if (get().sidebarConversations.length === 0) {
+        set({ sidebarConversations: DEMO_CONVERSATIONS });
+      }
+    } finally {
+      set({ isLoadingConversations: false });
+    }
+  },
 
-  removeConversation: (id) => set((state) => ({
-    conversations: state.conversations.filter((c) => c.id !== id),
-    currentConversationId: state.currentConversationId === id ? null : state.currentConversationId,
+  setActiveConversation: (id) => set((state) => ({
+    sidebarConversations: state.sidebarConversations.map((c) => ({
+      ...c,
+      active: id !== null ? c.id === id : false,
+    })),
   })),
 
   setCurrentConversation: (id) => set({ currentConversationId: id }),
@@ -82,7 +141,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
   setSending: (isSending) => set({ isSending }),
 
   clearChat: () => set({
-    conversations: [],
+    sidebarConversations: [],
     currentConversationId: null,
     messages: {},
   }),

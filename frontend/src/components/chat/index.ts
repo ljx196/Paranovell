@@ -13,3 +13,5 @@ export { ChatInput } from './ChatInput';
 export { TypingIndicator } from './TypingIndicator';
 
 export { LoadMoreIndicator } from './LoadMoreIndicator';
+
+export { QuickReplies } from './QuickReplies';

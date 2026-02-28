@@ -11,6 +11,7 @@ import (
 	"github.com/gennovelweb/bff/internal/database"
 	"github.com/gennovelweb/bff/internal/handler"
 	"github.com/gennovelweb/bff/internal/middleware"
+	"github.com/gennovelweb/bff/internal/model"
 	"github.com/gennovelweb/bff/internal/service"
 	"github.com/gennovelweb/bff/internal/utils"
 	"github.com/gin-gonic/gin"
@@ -52,6 +53,9 @@ func main() {
 	if err := database.EnsureAdmin(&cfg.Admin); err != nil {
 		log.Printf("Warning: Failed to ensure admin account: %v", err)
 	}
+
+	// Seed default quick replies
+	seedQuickReplies()
 
 	// Initialize Redis
 	if err := database.InitRedis(&cfg.Redis); err != nil {
@@ -204,6 +208,7 @@ func main() {
 			chat.GET("/conversations/:id/messages", handler.GetMessages)
 			chat.POST("/conversations/:id/messages", handler.SendMessage)
 			chat.POST("/conversations/:id/messages/stream", handler.StreamMessage)
+			chat.GET("/quick-replies", handler.GetQuickReplies)
 		}
 
 		// WebSocket endpoint
@@ -299,4 +304,26 @@ func main() {
 	if err := r.Run(":" + port); err != nil {
 		log.Fatalf("Failed to start server: %v", err)
 	}
+}
+
+// seedQuickReplies inserts default quick reply options if none exist
+func seedQuickReplies() {
+	db := database.GetDB()
+	var count int64
+	db.Model(&model.QuickReply{}).Count(&count)
+	if count > 0 {
+		return
+	}
+
+	defaults := []model.QuickReply{
+		{Content: "帮我写一个故事大纲", SortOrder: 1, IsActive: true},
+		{Content: "继续写下去", SortOrder: 2, IsActive: true},
+		{Content: "换一种风格重写", SortOrder: 3, IsActive: true},
+	}
+	for _, qr := range defaults {
+		if err := db.Create(&qr).Error; err != nil {
+			log.Printf("Warning: Failed to seed quick reply: %v", err)
+		}
+	}
+	log.Println("Seeded default quick replies")
 }

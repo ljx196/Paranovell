@@ -80,6 +80,7 @@ func InitSchema() error {
 		&model.SystemConfig{},
 		&model.SensitiveWord{},
 		&model.ContentReview{},
+		&model.QuickReply{},
 	); err != nil {
 		return fmt.Errorf("failed to auto migrate: %w", err)
 	}

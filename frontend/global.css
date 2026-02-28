@@ -2,7 +2,7 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Custom scrollbar styles */
+/* Custom scrollbar styles - dark theme (default) */
 ::-webkit-scrollbar {
   width: 8px;
   height: 8px;
@@ -19,4 +19,13 @@
 
 ::-webkit-scrollbar-thumb:hover {
   background: #5a5a5a;
+}
+
+/* Light theme scrollbar */
+.light ::-webkit-scrollbar-thumb {
+  background: #c4c4c4;
+}
+
+.light ::-webkit-scrollbar-thumb:hover {
+  background: #a0a0a0;
 }

@@ -98,9 +98,7 @@ export function MessageBubble({ role, content, images, style }: MessageBubblePro
       style={[
         styles.container,
         {
-          backgroundColor: isUser
-            ? colors.msgUserBg
-            : (!isDark ? colors.bgTertiary : colors.msgAiBg),
+          backgroundColor: 'transparent',
           paddingHorizontal: paddingX,
         },
         style,

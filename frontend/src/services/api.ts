@@ -351,6 +351,14 @@ class ApiClient {
     });
   }
 
+  async getQuickReplies(): Promise<{ items: { id: number; content: string }[] }> {
+    const response = await this.request<{
+      code: number;
+      data: { items: { id: number; content: string }[] };
+    }>('/chat/quick-replies');
+    return response.data;
+  }
+
   // Balance endpoints
   async getBalance() {
     const response = await this.request<{

@@ -17,11 +17,11 @@ import { useResponsive } from '../src/hooks/useResponsive';
 import { useAuthStore } from '../src/store/useAuthStore';
 import { useBalanceStore } from '../src/store/useBalanceStore';
 import { Header } from '../src/components/layout';
-import { Sidebar, Conversation } from '../src/components/chat';
+import { Sidebar } from '../src/components/chat';
 import { SettingsSideTabs, ProfileContent } from '../src/components/settings';
+import { useChatStore } from '../src/store/useChatStore';
 import type { SettingsTab } from '../src/components/settings';
 import { OverviewContent, TransactionsContent, RechargeContent } from './usage';
-import { api } from '../src/services/api';
 
 export default function SettingsPage() {
   const { colors, spacing } = useTheme();
@@ -30,13 +30,14 @@ export default function SettingsPage() {
   const store = useBalanceStore();
   const params = useLocalSearchParams<{ tab?: string }>();
 
+  const { sidebarConversations: conversations, loadConversations } = useChatStore();
+
   const [activeTab, setActiveTab] = useState<SettingsTab>('profile');
   const [sidebarOpen, setSidebarOpen] = useState(!isMobile);
-  const [conversations, setConversations] = useState<Conversation[]>([]);
 
-  // Load sidebar conversations
+  // Load sidebar conversations if not already loaded
   useEffect(() => {
-    if (isAuthenticated) {
+    if (isAuthenticated && conversations.length === 0) {
       loadConversations();
     }
   }, [isAuthenticated]);
@@ -62,31 +63,6 @@ export default function SettingsPage() {
       store.initOverview();
     }
   }, [isAuthenticated, activeTab]);
-
-  const loadConversations = async () => {
-    try {
-      const response = await api.getConversations();
-      const apiConversations = response.data?.conversations || [];
-      if (apiConversations.length > 0) {
-        const formatted: Conversation[] = apiConversations.map((c: any) => ({
-          id: c.id,
-          title: c.title || '新会话',
-          time: '',
-          active: false,
-        }));
-        setConversations(formatted);
-      } else {
-        setConversations([
-          { id: 'demo', title: '演示对话', time: '刚刚', active: true },
-        ]);
-      }
-    } catch (err) {
-      console.log('Settings: Failed to load conversations:', err);
-      setConversations([
-        { id: 'demo', title: '演示对话', time: '刚刚', active: true },
-      ]);
-    }
-  };
 
   const handleTabChange = (tab: SettingsTab) => {
     setActiveTab(tab);
