@@ -1,5 +1,5 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
-import { View, ScrollView, Animated, Easing, NativeSyntheticEvent, NativeScrollEvent, Text, Platform } from 'react-native';
+import { View, ScrollView, Animated, Easing, NativeSyntheticEvent, NativeScrollEvent, Text, Platform, Pressable, StyleSheet } from 'react-native';
 import { router, Redirect } from 'expo-router';
 import { useTheme } from '../src/theme';
 import { useResponsive } from '../src/hooks/useResponsive';
@@ -320,20 +320,35 @@ export default function ChatScreen() {
   return (
     <View style={{ flex: 1, flexDirection: 'row', backgroundColor: colors.bgPrimary }}>
       <LowBalanceModal />
-      {/* Sidebar - show on desktop or when open on mobile */}
-      {sidebarOpen && isDesktop && (
-        <Sidebar
-          conversations={conversations}
-          onNewChat={handleNewChat}
-          onSelectConversation={handleSelectConversation}
-          onCollapse={() => setSidebarOpen(false)}
-          onLogout={() => {
-            useAuthStore.getState().logout();
-            router.replace('/login');
-          }}
-          userName={user?.nickname || user?.email || '用户'}
-          userPlan="免费版"
-        />
+      {/* Sidebar */}
+      {sidebarOpen && (
+        <>
+          {/* Mobile: overlay backdrop */}
+          {isMobile && (
+            <Pressable
+              style={chatStyles.sidebarBackdrop}
+              onPress={() => setSidebarOpen(false)}
+              accessibilityLabel="关闭菜单"
+            />
+          )}
+          <View style={isMobile ? chatStyles.sidebarMobile : undefined}>
+            <Sidebar
+              conversations={conversations}
+              onNewChat={handleNewChat}
+              onSelectConversation={(id) => {
+                handleSelectConversation(id);
+                if (isMobile) setSidebarOpen(false);
+              }}
+              onCollapse={() => setSidebarOpen(false)}
+              onLogout={() => {
+                useAuthStore.getState().logout();
+                router.replace('/login');
+              }}
+              userName={user?.nickname || user?.email || '用户'}
+              userPlan="免费版"
+            />
+          </View>
+        </>
       )}
 
       {/* Main Content */}
@@ -341,7 +356,7 @@ export default function ChatScreen() {
         {/* Header */}
         <Header
           title={activeConversation?.title || '新会话'}
-          showMenuButton={!sidebarOpen}
+          showMenuButton={isMobile ? !sidebarOpen : !sidebarOpen}
           onMenuPress={() => setSidebarOpen(true)}
         />
 
@@ -434,3 +449,22 @@ export default function ChatScreen() {
     </View>
   );
 }
+
+const chatStyles = StyleSheet.create({
+  sidebarBackdrop: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.4)',
+    zIndex: 9,
+  },
+  sidebarMobile: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    bottom: 0,
+    zIndex: 10,
+  },
+});

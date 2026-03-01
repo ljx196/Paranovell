@@ -12,6 +12,7 @@ import {
   RefreshControl,
   StyleSheet,
   ActivityIndicator,
+  Platform,
 } from 'react-native';
 import { router, useLocalSearchParams, Redirect } from 'expo-router';
 import { Inbox, CheckCheck } from 'lucide-react-native';
@@ -170,20 +171,35 @@ export default function MessagesScreen() {
 
   return (
     <View style={{ flex: 1, flexDirection: 'row', backgroundColor: colors.bgPrimary }}>
-      {/* Sidebar - same as chat page */}
-      {sidebarOpen && !isMobile && (
-        <Sidebar
-          conversations={conversations}
-          onNewChat={handleNewChat}
-          onSelectConversation={handleSelectConversation}
-          onCollapse={() => setSidebarOpen(false)}
-          onLogout={() => {
-            useAuthStore.getState().logout();
-            router.replace('/login');
-          }}
-          userName={user?.nickname || user?.email || '用户'}
-          userPlan="免费版"
-        />
+      {/* Sidebar */}
+      {sidebarOpen && (
+        <>
+          {/* Mobile: overlay backdrop */}
+          {isMobile && (
+            <Pressable
+              style={styles.sidebarBackdrop}
+              onPress={() => setSidebarOpen(false)}
+              accessibilityLabel="关闭菜单"
+            />
+          )}
+          <View style={isMobile ? styles.sidebarMobile : undefined}>
+            <Sidebar
+              conversations={conversations}
+              onNewChat={handleNewChat}
+              onSelectConversation={(id) => {
+                handleSelectConversation(id);
+                if (isMobile) setSidebarOpen(false);
+              }}
+              onCollapse={() => setSidebarOpen(false)}
+              onLogout={() => {
+                useAuthStore.getState().logout();
+                router.replace('/login');
+              }}
+              userName={user?.nickname || user?.email || '用户'}
+              userPlan="免费版"
+            />
+          </View>
+        </>
       )}
 
       {/* Main Content */}
@@ -318,6 +334,22 @@ export default function MessagesScreen() {
 }
 
 const styles = StyleSheet.create({
+  sidebarBackdrop: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.4)',
+    zIndex: 9,
+  },
+  sidebarMobile: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    bottom: 0,
+    zIndex: 10,
+  },
   container: {
     flex: 1,
   },
